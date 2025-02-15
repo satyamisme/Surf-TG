@@ -148,7 +148,7 @@
     const downloadlink = `${domainUrl}/${videoId}/${encodedName}?id=${idParam}&hash=${hashParam}`;
 
     const player = new Plyr('#player', {
-        controls: ['play', 'progress', 'current-time', 'mute', 'volume', 'fullscreen', 'pip', 'airplay', 'settings', "play-large", 'duration'],
+        controls: ['play', 'progress', 'current-time', 'mute', 'volume', 'fullscreen', 'audio', 'pip', 'captions', 'airplay', 'settings', "play-large", 'duration'],
         hideControls: false,
         keyboard: { focused: true, global: true },
         loop: { active: false },
