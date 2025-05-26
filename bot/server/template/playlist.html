@@ -3,6 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
+    <!-- Removed CSRF meta tag if present -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="https://cdn.jsdelivr.net/gh/weebzone/weebzone/data/Surf-TG/src/ico2.png" type="image/x-icon">
     <link rel="shortcut icon" href="https://cdn.jsdelivr.net/gh/weebzone/weebzone/data/Surf-TG/src/ico2.png"
@@ -16,7 +17,6 @@
         crossorigin="anonymous"></script>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/gh/weebzone/weebzone/data/Surf-TG/js/SurfTG.js"></script>
-    <script disable-devtool-auto src='https://cdn.jsdelivr.net/npm/disable-devtool'></script>
 </head>
 <style>
     a {
@@ -68,6 +68,7 @@
             <div class="modal-content">
                 <div class="modal-body">
                     <form action="/create" method="post">
+                        <!-- Removed CSRF hidden input -->
                         <label for="folderName" class="form-label">Folder Name</label>
                         <input type="text" class="form-control" id="folderName" name="folderName"
                             placeholder="Enter folder name">
@@ -90,6 +91,7 @@
             <div class="modal-content">
                 <div class="modal-body">
                     <form action="/edit_post" method="post">
+                        <!-- Removed CSRF hidden input -->
                         <input type="hidden" id="edit_file_id" name="file_id" value="">
                         <input type="hidden" id="edit_file_size" name="file_size" value="">
                         <input type="hidden" id="edit_file_folder_id" name="file_folder_id" value="">
@@ -116,6 +118,7 @@
             <div class="modal-content">
                 <div class="modal-body">
                     <form action="/edit" method="post">
+                        <!-- Removed CSRF hidden input -->
                         <input type="hidden" id="edit_folder_id" name="folder_id" value="">
                         <input type="hidden" id="edit_parent" name="parent" value="">
                         <label for="edit_folderName">Folder Name:</label>
@@ -243,5 +246,4 @@
         window.location.href = newUrl;
     }
 </script>
-
 </html>

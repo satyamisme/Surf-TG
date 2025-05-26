@@ -17,7 +17,6 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/gh/weebzone/weebzone/data/Surf-TG/js/SurfTG.js"></script>
-    <script disable-devtool-auto src='https://cdn.jsdelivr.net/npm/disable-devtool'></script>
 </head>
 <style>
     a {
@@ -68,6 +67,7 @@
             <div class="modal-content">
                 <div class="modal-body">
                     <form action="/send" method="post" id="sendPopupForm">
+                        <!-- Ensure csrf_token hidden input is removed if it was here -->
                         <input type="hidden" id="chatId" name="chatId" value="<!-- Chat_id -->">
                         <input type="hidden" id="selectedIds" name="selectedIds">
                         <label for="folderSearch">Search Folder:</label>

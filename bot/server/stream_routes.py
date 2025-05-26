@@ -5,6 +5,7 @@ import mimetypes
 import secrets
 from aiohttp import web
 from aiohttp.http_exceptions import BadStatusLine
+# from aiohttp_csrf import csrf_protect # Reverted: Import csrf_protect removed
 from bot.helper.chats import get_chats, post_playlist, posts_chat, posts_db_file
 from bot.helper.database import Database
 from bot.helper.search import search
@@ -61,6 +62,7 @@ async def logout_route(request):
     return web.HTTPFound('/login')
 
 
+# @csrf_protect # Reverted
 @routes.post('/create')
 async def create_route(request):
     session = await get_session(request)
@@ -78,15 +80,16 @@ async def create_route(request):
         return web.HTTPFound(f'/playlist?db={parent_dir}')
 
 
+# @csrf_protect # Reverted
 @routes.post('/delete')
 async def delete_route(request):
     session = await get_session(request)
     if (username := session.get('user')) != Telegram.ADMIN_USERNAME:
         return web.json_response({'msg': 'Who the hell you are'})
     data = await request.json()
-    id = data.get('delete_id')
+    id_val = data.get('delete_id') 
     parent = data.get('parent')
-    if not (success := db.delete(id)):
+    if not (success := await db.delete(id_val)): 
         return web.HTTPInternalServerError()
     if parent == 'root':
         return web.HTTPFound('/')
@@ -94,6 +97,7 @@ async def delete_route(request):
         return web.HTTPFound(f'/playlist?db={parent}')
 
 
+# @csrf_protect # Reverted
 @routes.post('/edit')
 async def editFolder_route(request):
     session = await get_session(request)
@@ -102,9 +106,9 @@ async def editFolder_route(request):
     data = await request.post()
     folderName = data.get('folderName')
     thumbnail = data.get('thumbnail')
-    id = data.get('folder_id')
+    id_val = data.get('folder_id') 
     parent = data.get('parent')
-    success = await db.edit(id, folderName, thumbnail)
+    success = await db.edit(id_val, folderName, thumbnail) 
     if not success:
         return web.HTTPInternalServerError()
     if parent == 'root':
@@ -113,6 +117,7 @@ async def editFolder_route(request):
         return web.HTTPFound(f'/playlist?db={parent}')
 
 
+# @csrf_protect # Reverted
 @routes.post('/edit_post')
 async def editPost_route(request):
     session = await get_session(request)
@@ -121,9 +126,9 @@ async def editPost_route(request):
     data = await request.post()
     fileName = data.get('fileName')
     thumbnail = data.get('filethumbnail')
-    id = data.get('file_id')
+    id_val = data.get('file_id') 
     parent = data.get('file_folder_id')
-    success = await db.edit(id, fileName, thumbnail)
+    success = await db.edit(id_val, fileName, thumbnail) 
     if not success:
         return web.HTTPInternalServerError()
     if parent == 'root':
@@ -138,10 +143,11 @@ async def searchDbFolder_route(request):
     if (username := session.get('user')) != Telegram.ADMIN_USERNAME:
         return web.json_response({'msg': 'Who the hell you are'})
     query = request.query.get('query', '')
-    folder_names = await db.search_DbFolder(query)
+    folder_names = await db.search_DbFolder(query) 
     return web.json_response(folder_names)
 
 
+# @csrf_protect # Reverted
 @routes.post('/send')
 async def send_route(request):
     data = await request.post()
@@ -154,22 +160,22 @@ async def send_route(request):
 
     formatted_entries = []
     for entry in selected_ids.split(','):
-        file_id, hash, filename, size, file_type, thumbnail = entry.split('|')
+        file_id_str, hash_val, filename, size, file_type, thumbnail_url = entry.split('|') 
         formatted_entries.append({
             'chat_id': chat_id,
             'parent_folder': folder_id,
-            'file_id': file_id,
-            'hash': hash,
+            'file_id': file_id_str, 
+            'hash': hash_val,
             'name': filename,
             'size': size,
             'file_type': file_type,
-            'thumbnail': thumbnail,
+            'thumbnail': thumbnail_url,
             'type': 'file'
         })
 
     json_data = json.dumps(formatted_entries)
-    data = json.loads(json_data)
-    await db.add_json(data)
+    data_list = json.loads(json_data) 
+    await db.add_json(data_list) 
     if folder_id == 'root':
         return web.HTTPFound('/')
     else:
@@ -191,6 +197,7 @@ async def reload_route(request):
         return web.HTTPFound(f'/channel/{chat_id}')
 
 
+# @csrf_protect # Reverted
 @routes.post('/config')
 async def editConfig_route(request):
     session = await get_session(request)
@@ -199,11 +206,10 @@ async def editConfig_route(request):
     data = await request.post()
     channel = data.get('channel')
     theme = data.get('theme')
-    success = await db.update_config(theme=theme, auth_channel=channel)
+    success = await db.update_config(theme=theme, auth_channel=channel) 
     if not success:
         return web.HTTPInternalServerError()
     return web.HTTPFound('/')
-
 
 
 @routes.get('/')
@@ -212,7 +218,7 @@ async def home_route(request):
     if username := session.get('user'):
         try:
             channels = await get_chats()
-            playlists = await db.get_Dbfolder()
+            playlists = await db.get_Dbfolder() 
             phtml = await posts_chat(channels)
             dhtml = await post_playlist(playlists)
             is_admin = username == Telegram.ADMIN_USERNAME
@@ -232,9 +238,9 @@ async def playlist_route(request):
         try:
             parent_id = request.query.get('db')
             page = request.query.get('page', '1')
-            playlists = await db.get_Dbfolder(parent_id, page=page)
-            files = await db.get_dbFiles(parent_id, page=page)
-            text = await db.get_info(parent_id)
+            playlists = await db.get_Dbfolder(parent_id, page=page) 
+            files = await db.get_dbFiles(parent_id, page=page) 
+            text = await db.get_info(parent_id) 
             dhtml = await post_playlist(playlists)
             dphtml = await posts_db_file(files)
             is_admin = username == Telegram.ADMIN_USERNAME
@@ -256,9 +262,9 @@ async def dbsearch_route(request):
         query = request.query.get('q')
         is_admin = username == Telegram.ADMIN_USERNAME
         try:
-            files = await db.search_dbfiles(id=parent, page=page, query=query)
+            files = await db.search_dbfiles(id=parent, page=page, query=query) 
             dphtml = await posts_db_file(files)
-            name = await db.get_info(parent)
+            name = await db.get_info(parent) 
             text = f"{name} - {query}"
             return web.Response(text=await render_page(parent, None, route='playlist', database=dphtml, msg=text, is_admin=is_admin), content_type='text/html')
         except Exception as e:
@@ -273,15 +279,15 @@ async def dbsearch_route(request):
 async def channel_route(request):
     session = await get_session(request)
     if username := session.get('user'):
-        chat_id = request.match_info['chat_id']
-        chat_id = f"-100{chat_id}"
+        chat_id_str_val = request.match_info['chat_id'] 
+        chat_id_for_files = f"-100{chat_id_str_val}" 
         page = request.query.get('page', '1')
         is_admin = username == Telegram.ADMIN_USERNAME
         try:
-            posts = await get_files(chat_id, page=page)
-            phtml = await posts_file(posts, chat_id)
-            chat = await StreamBot.get_chat(int(chat_id))
-            return web.Response(text=await render_page(None, None, route='index', html=phtml, msg=chat.title, chat_id=chat_id.replace("-100", ""), is_admin=is_admin), content_type='text/html')
+            posts = await get_files(chat_id_for_files, page=page) 
+            phtml = await posts_file(posts, chat_id_for_files) 
+            chat = await StreamBot.get_chat(int(chat_id_for_files)) 
+            return web.Response(text=await render_page(None, None, route='index', html=phtml, msg=chat.title, chat_id=chat_id_str_val.replace("-100", ""), is_admin=is_admin), content_type='text/html')
         except Exception as e:
             logging.critical(e.with_traceback(None))
             raise web.HTTPInternalServerError(text=str(e)) from e
@@ -294,17 +300,17 @@ async def channel_route(request):
 async def search_route(request):
     session = await get_session(request)
     if username := session.get('user'):
-        chat_id = request.match_info['chat_id']
-        chat_id = f"-100{chat_id}"
+        chat_id_str_val = request.match_info['chat_id'] 
+        chat_id_for_search = f"-100{chat_id_str_val}" 
         page = request.query.get('page', '1')
         query = request.query.get('q')
         is_admin = username == Telegram.ADMIN_USERNAME
         try:
-            posts = await search(chat_id, page=page, query=query)
-            phtml = await posts_file(posts, chat_id)
-            chat = await StreamBot.get_chat(int(chat_id))
+            posts = await search(chat_id_for_search, page=page, query=query) 
+            phtml = await posts_file(posts, chat_id_for_search) 
+            chat = await StreamBot.get_chat(int(chat_id_for_search)) 
             text = f"{chat.title} - {query}"
-            return web.Response(text=await render_page(None, None, route='index', html=phtml, msg=text, chat_id=chat_id.replace("-100", ""), is_admin=is_admin), content_type='text/html')
+            return web.Response(text=await render_page(None, None, route='index', html=phtml, msg=text, chat_id=chat_id_str_val.replace("-100", ""), is_admin=is_admin), content_type='text/html')
         except Exception as e:
             logging.critical(e.with_traceback(None))
             raise web.HTTPInternalServerError(text=str(e)) from e
@@ -330,18 +336,18 @@ async def stream_handler_watch(request: web.Request):
     session = await get_session(request)
     if username := session.get('user'):
         try:
-            chat_id = request.match_info['chat_id']
-            chat_id = f"-100{chat_id}"
+            chat_id_str_val = request.match_info['chat_id'] 
+            chat_id_full = f"-100{chat_id_str_val}" 
             message_id = request.query.get('id')
             secure_hash = request.query.get('hash')
-            return web.Response(text=await render_page(message_id, secure_hash, chat_id=chat_id), content_type='text/html')
+            return web.Response(text=await render_page(message_id, secure_hash, chat_id=chat_id_full), content_type='text/html') 
         except InvalidHash as e:
             raise web.HTTPForbidden(text=e.message) from e
         except FIleNotFound as e:
-            db.delete_file(chat_id=chat_id, msg_id=message_id, hash=secure_hash)
+            # db.delete_file(chat_id=chat_id, msg_id=message_id, hash=secure_hash) # Removed
             raise web.HTTPNotFound(text=e.message) from e
-        except (AttributeError, BadStatusLine, ConnectionResetError):
-            pass
+        except (AttributeError, BadStatusLine, ConnectionResetError) as e:
+            logging.warning(f"Network/protocol error ignored in stream_handler_watch: {type(e).__name__} - {e}", exc_info=True)
         except Exception as e:
             logging.critical(e.with_traceback(None))
             raise web.HTTPInternalServerError(text=str(e)) from e
@@ -352,20 +358,36 @@ async def stream_handler_watch(request: web.Request):
 
 @routes.get('/{chat_id}/{encoded_name}', allow_head=True)
 async def stream_handler(request: web.Request):
+    # --- Input Validation (Upfront) ---
+    message_id_str = request.query.get('id')
+    secure_hash = request.query.get('hash') 
+    chat_id_str = request.match_info['chat_id'] 
+
+    # 1. Presence Check: Ensure 'id' and 'hash' query parameters are provided.
+    if not message_id_str or not secure_hash:
+        raise web.HTTPBadRequest(text="Missing required query parameters: id or hash.")
+
+    # 2. Type Check: Ensure chat_id (from path) and message_id (from query) are numeric.
     try:
-        chat_id = request.match_info['chat_id']
-        chat_id = f"-100{chat_id}"
-        message_id = request.query.get('id')
-        #name = request.match_info['encoded_name']
-        secure_hash = request.query.get('hash')
-        return await media_streamer(request, int(chat_id), int(message_id), secure_hash)
+        int(chat_id_str) 
+        int(message_id_str) 
+    except ValueError:
+        raise web.HTTPBadRequest(text="Invalid chat_id or message_id format (must be numbers).")
+    # --- Input Validation End ---
+    try:
+        chat_id_for_streamer = int(f"-100{chat_id_str}")
+        message_id_for_streamer = int(message_id_str)
+        return await media_streamer(request, chat_id_for_streamer, message_id_for_streamer, secure_hash)
     except InvalidHash as e:
         raise web.HTTPForbidden(text=e.message) from e
     except FIleNotFound as e:
-        db.delete_file(chat_id=chat_id, msg_id=message_id, hash=secure_hash)
+        # db.delete_file(chat_id=f"-100{chat_id_str}", msg_id=message_id_str, hash=secure_hash) # Removed
         raise web.HTTPNotFound(text=e.message) from e
-    except (AttributeError, BadStatusLine, ConnectionResetError):
-        pass
+    except web.HTTPBadRequest: 
+        raise
+    except (AttributeError, BadStatusLine, ConnectionResetError) as e: 
+        logging.warning(f"Network/protocol error ignored: {type(e).__name__} - {e}", exc_info=True)
+        pass 
     except Exception as e:
         logging.critical(e.with_traceback(None))
         raise web.HTTPInternalServerError(text=str(e))
@@ -391,7 +413,7 @@ async def media_streamer(request: web.Request, chat_id: int, id: int, secure_has
         tg_connect = ByteStreamer(faster_client)
         class_cache[faster_client] = tg_connect
     logging.debug("before calling get_file_properties")
-    file_id = await tg_connect.get_file_properties(chat_id=chat_id, message_id=id)
+    file_id = await tg_connect.get_file_properties(chat_id=chat_id, message_id=id) 
     logging.debug("after calling get_file_properties")
 
     if file_id.unique_id[:6] != secure_hash:

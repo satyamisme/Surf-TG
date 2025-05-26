@@ -61,8 +61,8 @@ class ByteStreamer:
                             location=location, offset=offset, limit=chunk_size
                         ),
                     )
-        except (TimeoutError, AttributeError):
-            pass
+        except (TimeoutError, AttributeError) as e:
+            logging.warning(f"Ignored error during file yield: {type(e).__name__} - {e}", exc_info=True)
         finally:
             logging.debug("Finished yielding file with {current_part} parts.")
             work_loads[index] -= 1
