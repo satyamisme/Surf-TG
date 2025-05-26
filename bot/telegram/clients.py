@@ -34,11 +34,19 @@ async def initialize_clients():
             LOGGER.error(
                 f"Failed starting Client - {client_id} Error:", exc_info=True)
 
-    clients = await gather(*[start_client(i, token) for i, token in all_tokens.items()])
-    multi_clients.update(dict(clients))
-    if len(multi_clients) != 1:
+    clients_results = await gather(*[start_client(i, token) for i, token in all_tokens.items()])
+    
+    # Filter out None results (from clients that failed to start)
+    successful_clients = [client_pair for client_pair in clients_results if client_pair is not None]
+    
+    if successful_clients:
+        multi_clients.update(dict(successful_clients))
+    
+    # Check if more than just the main StreamBot (client 0) is present
+    if len(multi_clients) > 1: 
         Telegram.MULTI_CLIENT = True
-        LOGGER.info("Multi-Client Mode Enabled")
+        # Log the number of *additional* successful clients
+        LOGGER.info(f"Multi-Client Mode Enabled with {len(multi_clients) -1} additional client(s).")
     else:
-        LOGGER.info(
-            "No additional clients were initialized, using default client")
+        Telegram.MULTI_CLIENT = False # Ensure it's False if no additional clients started
+        LOGGER.info("No additional clients were successfully initialized, using default client.")

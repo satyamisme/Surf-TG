@@ -1,6 +1,7 @@
 from os import getenv
 from dotenv import load_dotenv
 from pathlib import Path
+from cryptography.fernet import Fernet
 
 if Path("config.env").exists():
     load_dotenv("config.env")
@@ -23,3 +24,4 @@ class Telegram:
     WORKERS = int(getenv('WORKERS', '10'))
     MULTI_CLIENT = getenv('MULTI_CLIENT', 'False')
     HIDE_CHANNEL = getenv('HIDE_CHANNEL', 'False')
+    SESSION_SECRET_KEY = getenv("SESSION_SECRET_KEY")
