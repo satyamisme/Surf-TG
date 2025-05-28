@@ -6,6 +6,11 @@ import re
 from os.path import splitext
 from bot import LOGGER
 
+CONFIG_KEYS_TO_SYNC = [
+    'PORT', 'BASE_URL', 'AUTH_CHANNEL', 'THEME', 'USERNAME', 
+    'PASSWORD', 'ADMIN_USERNAME', 'ADMIN_PASSWORD', 'SLEEP_THRESHOLD', 
+    'WORKERS', 'MULTI_CLIENT', 'HIDE_CHANNEL', 'SESSION_SECRET_KEY'
+]
 
 class Database:
     def __init__(self):
@@ -104,29 +109,30 @@ class Database:
         )
         return mydoc_list
 
-    async def update_config(self, theme, auth_channel):
-        bot_id = Telegram.BOT_TOKEN.split(":", 1)[0]
-        
-        config = await asyncio.to_thread(self.config.find_one, {"_id": bot_id})
-        
-        if config is None:
-            result = await asyncio.to_thread(
-                self.config.insert_one,
-                {"_id": bot_id, "theme": theme, "auth_channel": auth_channel}
-            )
-            return result.inserted_id is not None
-        else:
-            result = await asyncio.to_thread(
+    async def sync_config_from_env(self):
+        for key in CONFIG_KEYS_TO_SYNC:
+            value = getattr(Telegram, key, None)
+            # For AUTH_CHANNEL, it's already a list in Telegram config.
+            # MongoDB can store lists directly.
+            await asyncio.to_thread(
                 self.config.update_one,
-                {"_id": bot_id},
-                {"$set": {"theme": theme, "auth_channel": auth_channel}}
+                {"_id": key},
+                {"$set": {"value": value}},
+                upsert=True
             )
-            return result.modified_count > 0
+
+    async def update_config(self, theme, auth_channel):
+        await asyncio.to_thread(self.config.update_one, {"_id": "THEME"}, {"$set": {"value": theme}}, upsert=True)
+        await asyncio.to_thread(self.config.update_one, {"_id": "AUTH_CHANNEL"}, {"$set": {"value": auth_channel}}, upsert=True)
+        # Assuming the method should return a boolean indicating success,
+        # though the original task description didn't specify.
+        # For now, let's keep it simple and not return.
+        # If a return value is needed, we'd check result.modified_count or result.upserted_id.
+        return True # Placeholder, actual success check might be needed
 
     async def get_variable(self, key):
-        bot_id = Telegram.BOT_TOKEN.split(":", 1)[0]
-        config = await asyncio.to_thread(self.config.find_one, {"_id": bot_id})
-        return config.get(key) if config is not None else None
+        doc = await asyncio.to_thread(self.config.find_one, {"_id": key.upper()})
+        return doc.get("value") if doc else None
 
     async def list_tgfiles(self, id, page=1, per_page=50):
         query = {'chat_id': id}

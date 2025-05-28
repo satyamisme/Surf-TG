@@ -33,11 +33,33 @@ async def start(bot: Client, message: Message):
 @StreamBot.on_message(filters.command('index'))
 async def start(bot: Client, message: Message):
     channel_id = message.chat.id
-    AUTH_CHANNEL = await db.get_variable('auth_channel')
-    if AUTH_CHANNEL is None or AUTH_CHANNEL.strip() == '':
-        AUTH_CHANNEL = Telegram.AUTH_CHANNEL
+    # Fetch AUTH_CHANNEL from the database
+    # In database.py, sync_config_from_env stores keys like 'AUTH_CHANNEL'
+    auth_channel_val = await db.get_variable('AUTH_CHANNEL') 
+
+    if isinstance(auth_channel_val, list):
+        # If it's a list from DB (expected), ensure all elements are stripped strings
+        AUTH_CHANNEL = [str(c).strip() for c in auth_channel_val if str(c).strip()]
+    elif isinstance(auth_channel_val, str) and auth_channel_val.strip():
+        # This case should ideally not be hit if sync_config_from_env works as expected
+        # and AUTH_CHANNEL in config.env is a list/comma-separated string that Telegram.AUTH_CHANNEL parses to a list.
+        # However, adding for robustness if old string format data exists in DB.
+        LOGGER.warning("AUTH_CHANNEL from DB was a string; parsing. Should be a list.")
+        AUTH_CHANNEL = [c.strip() for c in auth_channel_val.split(',') if c.strip()]
     else:
-        AUTH_CHANNEL = [channel.strip() for channel in AUTH_CHANNEL.split(",")]
+        # Fallback to Telegram.AUTH_CHANNEL if DB value is missing, not a list, 
+        # an empty list (after stripping), or an unsuitable type.
+        # Telegram.AUTH_CHANNEL is already a list of stripped strings.
+        if not auth_channel_val: # Handles None, empty list from DB after processing
+            LOGGER.info("AUTH_CHANNEL not found or empty in DB, falling back to config.env.")
+        else: # Handles other unexpected types
+            LOGGER.warning(f"AUTH_CHANNEL from DB was of unexpected type: {type(auth_channel_val)}. Falling back to config.env.")
+        AUTH_CHANNEL = Telegram.AUTH_CHANNEL
+
+    # Ensure AUTH_CHANNEL is always a list, even if Telegram.AUTH_CHANNEL was somehow empty.
+    if AUTH_CHANNEL is None: # Should not happen with current Telegram.AUTH_CHANNEL parsing
+        AUTH_CHANNEL = []
+    
     if str(channel_id) in AUTH_CHANNEL:
         try:
             last_id = message.id
@@ -76,11 +98,33 @@ async def start(bot: Client, message: Message):
 )
 async def file_receive_handler(bot: Client, message: Message):
     channel_id = message.chat.id
-    AUTH_CHANNEL = await db.get_variable('auth_channel')
-    if AUTH_CHANNEL is None or AUTH_CHANNEL.strip() == '':
-        AUTH_CHANNEL = Telegram.AUTH_CHANNEL
+    # Fetch AUTH_CHANNEL from the database
+    # In database.py, sync_config_from_env stores keys like 'AUTH_CHANNEL'
+    auth_channel_val = await db.get_variable('AUTH_CHANNEL') 
+
+    if isinstance(auth_channel_val, list):
+        # If it's a list from DB (expected), ensure all elements are stripped strings
+        AUTH_CHANNEL = [str(c).strip() for c in auth_channel_val if str(c).strip()]
+    elif isinstance(auth_channel_val, str) and auth_channel_val.strip():
+        # This case should ideally not be hit if sync_config_from_env works as expected
+        # and AUTH_CHANNEL in config.env is a list/comma-separated string that Telegram.AUTH_CHANNEL parses to a list.
+        # However, adding for robustness if old string format data exists in DB.
+        LOGGER.warning("AUTH_CHANNEL from DB was a string; parsing. Should be a list.")
+        AUTH_CHANNEL = [c.strip() for c in auth_channel_val.split(',') if c.strip()]
     else:
-        AUTH_CHANNEL = [channel.strip() for channel in AUTH_CHANNEL.split(",")]
+        # Fallback to Telegram.AUTH_CHANNEL if DB value is missing, not a list, 
+        # an empty list (after stripping), or an unsuitable type.
+        # Telegram.AUTH_CHANNEL is already a list of stripped strings.
+        if not auth_channel_val: # Handles None, empty list from DB after processing
+            LOGGER.info("AUTH_CHANNEL not found or empty in DB, falling back to config.env.")
+        else: # Handles other unexpected types
+            LOGGER.warning(f"AUTH_CHANNEL from DB was of unexpected type: {type(auth_channel_val)}. Falling back to config.env.")
+        AUTH_CHANNEL = Telegram.AUTH_CHANNEL
+
+    # Ensure AUTH_CHANNEL is always a list, even if Telegram.AUTH_CHANNEL was somehow empty.
+    if AUTH_CHANNEL is None: # Should not happen with current Telegram.AUTH_CHANNEL parsing
+        AUTH_CHANNEL = []
+    
     if str(channel_id) in AUTH_CHANNEL:
         try:
             file = message.video or message.document
