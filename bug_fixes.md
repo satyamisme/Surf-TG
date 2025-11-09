@@ -33,7 +33,10 @@ This issue was caused by an incompatibility between recent versions of Python (3
 
 ### Fix
 
-The fix involved explicitly installing the `uvloop` event loop at the very beginning of the application's entry point (`bot/__main__.py`). By adding the following lines to the top of the file, we ensure that `uvloop` is installed before any other `asyncio`-dependent libraries are imported:
+The fix involved two steps:
+
+1.  **Updating the `UPSTREAM_REPO` in `update.py`:** The `update.py` script was configured to pull updates from the original `weebzone/Surf-TG` repository, which would overwrite any local changes. This was changed to `https://github.com/satyamisme/Surf-TG` to prevent the fix from being overwritten.
+2.  **Installing `uvloop` at startup:** The `uvloop` event loop is now explicitly installed at the very beginning of the application's entry point (`bot/__main__.py`). This ensures that `uvloop` is installed before any other `asyncio`-dependent libraries are imported, preventing the `RuntimeError`.
 
 ```python
 import uvloop
@@ -42,6 +45,7 @@ uvloop.install()
 
 ### Timeline
 
-- **2025-11-08:** Bug was reported and investigated.
-- **2025-11-08:** Root cause was identified as an event loop initialization issue.
-- **2025-11-08:** The fix was implemented and tested.
+- **2025-11-08:** Initial bug was reported and investigated.
+- **2025-11-08:** First fix was implemented, but was overwritten by the `update.py` script.
+- **2025-11-08:** The `update.py` script was fixed to point to the correct repository.
+- **2025-11-08:** The `uvloop` fix was re-applied.
