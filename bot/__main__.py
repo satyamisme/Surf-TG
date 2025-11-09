@@ -1,3 +1,7 @@
+import uvloop
+
+uvloop.install()
+
 from asyncio import get_event_loop, sleep as asleep, gather
 from traceback import format_exc
 
