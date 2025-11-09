@@ -96,6 +96,25 @@ async def get_files(chat_id, page=1):
 
     return posts
 
+async def index_channel_files(chat_id):
+    """Index all files from a channel into the database"""
+    all_files = []
+    async for message in UserBot.get_chat_history(int(chat_id)):
+        if file := message.video or message.document:
+            title = file.file_name or message.caption or file.file_id
+            title, _ = splitext(title)
+            title = re.sub(r'[.,|_\',]', ' ', title)
+            all_files.append({
+                "chat_id": str(chat_id),
+                "msg_id": message.id,
+                "hash": file.file_unique_id[:6],
+                "title": title,
+                "size": get_readable_file_size(file.file_size),
+                "type": file.mime_type
+            })
+
+    await db.bulk_add_tgfiles(all_files)
+
 async def posts_file(posts, chat_id):
     phtml = """
             <div class="col">
