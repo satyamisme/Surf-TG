@@ -241,6 +241,23 @@ async def index_channel_route(request):
         return web.HTTPInternalServerError(text=f"Failed to index channel: {e}")
 
 
+@routes.get(r'/index/{chat_id:\d+}')
+async def index_channel_route(request):
+    session = await get_session(request)
+    if (username := session.get('user')) != Telegram.ADMIN_USERNAME:
+        return web.json_response({'msg': 'Admins only'}, status=403)
+
+    chat_id = request.match_info['chat_id']
+    chat_id = f"-100{chat_id}"
+
+    try:
+        await index_channel_files(chat_id)
+        return web.HTTPFound(f'/channel/{chat_id.replace("-100", "")}')
+    except Exception as e:
+        logging.critical(e.with_traceback(None))
+        return web.HTTPInternalServerError(text=f"Failed to index channel: {e}")
+
+
 @routes.get('/playlist')
 async def playlist_route(request):
     session = await get_session(request)
