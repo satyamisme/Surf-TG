@@ -83,7 +83,20 @@
                 padding-left: 15px;
             }
         }
-    </style>
+/* Enable text selection throughout the page */
+.card-title, .card-text, .container {
+    user-select: text;
+    -webkit-user-select: text;
+    -moz-user-select: text;
+    -ms-user-select: text;
+}
+
+/* Ensure search inputs allow copy-paste */
+input[type="search"], input[type="text"] {
+    user-select: text !important;
+    -webkit-user-select: text !important;
+}
+</style>
 </head>
 
 <body>
@@ -113,15 +126,16 @@
             <p class="card-text">Size: <!-- Size --></p>
         </div>
     </div>
-    <div class="container d-flex justify-content-center align-items-center" style="width: 100%; padding: 0 5px;">
-        <button onclick="mx_player()" class="btn btn-primary">MX Player</button>
-        <button onclick="vlc_player()" class="btn btn-primary">VLC Mobile</button>
-        <button onclick="km_player()" class="btn btn-primary">KM Player</button>
-        <button onclick="get_file()" class="btn btn-primary">Get File</button>
-        <button onclick="copyUrl()" class="btn btn-primary">Copy Url</button>
-        <button onclick="download()" class="btn btn-primary">Download</button>
-        <button onclick="share()" class="btn btn-primary">Share</button>
-    </div>
+<!-- Add these buttons to the button container -->
+<div class="container d-flex justify-content-center align-items-center" style="width: 100%; padding: 0 5px;">
+    <div onclick="mx_player()" class="btn btn-primary">MX Player</div>
+    <div onclick="vlc_player()" class="btn btn-primary">VLC Mobile</div>
+    <div onclick="km_player()" class="btn btn-primary">KM Player</div>
+    <div onclick="get_file()" class="btn btn-primary">Get File</div>
+    <div onclick="copyUrl()" class="btn btn-primary">Copy URL</div>
+    <div onclick="copyVideoUrl()" class="btn btn-primary">Copy Video URL</div>
+    <div onclick="download()" class="btn btn-primary">Download</div>
+</div>
     <footer class="footer mt-auto py-3 text-muted text-center" style="color: white;">
         <div class="container d-flex justify-content-center align-items-center" style="width: 100%; padding: 0 10px;">
             <p class="float-end">
@@ -183,30 +197,53 @@
             window.location.href = openTG;
         }
     }
-    function copyUrl() {
-        const url = downloadlink;
-        navigator.clipboard.writeText(url)
-            .then(() => {
-                alert('URL copied to clipboard!');
-            })
-            .catch((error) => {
-                console.error('Failed to copy URL: ', error);
-            });
-    }
+// Enhanced copy functions
+function copyVideoUrl() {
+    const url = window.location.href;
+    navigator.clipboard.writeText(url)
+        .then(() => {
+            alert('Video URL copied to clipboard!');
+        })
+        .catch((error) => {
+            console.error('Failed to copy URL: ', error);
+            // Fallback for older browsers
+            const textArea = document.createElement('textarea');
+            textArea.value = url;
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textArea);
+            alert('Video URL copied to clipboard!');
+        });
+}
 
-    function share() {
-        if (navigator.share) {
-            navigator.share({
-                title: '<!-- Filename -->',
-                url: downloadlink
-            }).then(() => {
-                console.log('Thanks for sharing!');
-            })
-            .catch(console.error);
-        } else {
-            copyUrl();
-        }
-    }
+function copyUrl() {
+    const url = downloadlink;
+    navigator.clipboard.writeText(url)
+        .then(() => {
+            alert('Download URL copied to clipboard!');
+        })
+        .catch((error) => {
+            console.error('Failed to copy URL: ', error);
+            // Fallback
+            const textArea = document.createElement('textarea');
+            textArea.value = url;
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textArea);
+            alert('Download URL copied to clipboard!');
+        });
+}
+
+// Enable text selection
+document.addEventListener('DOMContentLoaded', function() {
+    const cardElements = document.querySelectorAll('.card-title, .card-text');
+    cardElements.forEach(element => {
+        element.style.userSelect = 'text';
+        element.style.webkitUserSelect = 'text';
+    });
+});
     function updateVideoSource() {
         const videoElement = document.getElementById('player');
         const newSrc = downloadlink;

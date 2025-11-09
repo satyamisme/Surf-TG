@@ -7,7 +7,7 @@ from aiohttp import web
 from aiohttp.http_exceptions import BadStatusLine
 from bot.helper.chats import get_chats, post_playlist, posts_chat, posts_db_file
 from bot.helper.database import Database
-from bot.helper.search import search
+from bot.helper.search import search, global_search
 from bot.helper.thumbnail import get_image
 from bot.telegram import work_loads, multi_clients
 from aiohttp_session import get_session
@@ -290,6 +290,28 @@ async def channel_route(request):
         return web.HTTPFound('/login')
 
 
+# Add these new routes
+@routes.get('/global-search')
+async def global_search_route(request):
+    session = await get_session(request)
+    if username := session.get('user'):
+        page = request.query.get('page', '1')
+        query = request.query.get('q')
+        is_admin = username == Telegram.ADMIN_USERNAME
+
+        try:
+            posts = await global_search(query=query, page=page)
+            phtml = await posts_file(posts, 'global')  # Modified posts_file to handle global results
+            text = f"Global Search: {query}"
+            return web.Response(text=await render_page(None, None, route='index', html=phtml, msg=text, chat_id='global', is_admin=is_admin), content_type='text/html')
+        except Exception as e:
+            logging.critical(e.with_traceback(None))
+            raise web.HTTPInternalServerError(text=str(e)) from e
+    else:
+        session['redirect_url'] = request.path_qs
+        return web.HTTPFound('/login')
+
+# Enhance existing search route
 @routes.get('/search/{chat_id}')
 async def search_route(request):
     session = await get_session(request)
@@ -299,8 +321,9 @@ async def search_route(request):
         page = request.query.get('page', '1')
         query = request.query.get('q')
         is_admin = username == Telegram.ADMIN_USERNAME
+
         try:
-            posts = await search(chat_id, page=page, query=query)
+            posts = await search(chat_id, query=query, page=page)
             phtml = await posts_file(posts, chat_id)
             chat = await StreamBot.get_chat(int(chat_id))
             text = f"{chat.title} - {query}"

@@ -97,11 +97,13 @@
         </div>
     </div>
 
-    <div class="container d-flex justify-content-center align-items-center" style="width: 100%; padding: 0 5px;">
-        <div onclick="copyUrl()" class="btn btn-primary">Copy Url</div>
-        <div onclick="download()" class="btn btn-primary">Download</div>
-        <div onclick="get_file()" class="btn btn-primary">Get File</div>
-    </div>
+<!-- Add copy buttons -->
+<div class="container d-flex justify-content-center align-items-center" style="width: 100%; padding: 0 5px;">
+    <div onclick="copyUrl()" class="btn btn-primary">Copy Download URL</div>
+    <div onclick="copyPageUrl()" class="btn btn-primary">Copy Page URL</div>
+    <div onclick="download()" class="btn btn-primary">Download</div>
+    <div onclick="get_file()" class="btn btn-primary">Get File</div>
+</div>
 
     <footer class="footer mt-auto py-3 text-muted text-center" style="color: white;">
         <div class="container d-flex justify-content-center align-items-center" style="width: 100%; padding: 0 10px;">
@@ -143,16 +145,52 @@
             window.location.href = openTG;
         }
     }
-    function copyUrl() {
-        const url = downloadlink;
-        navigator.clipboard.writeText(url)
-            .then(() => {
-                alert('URL copied to clipboard!');
-            })
-            .catch((error) => {
-                console.error('Failed to copy URL: ', error);
-            });
-    }
+function copyPageUrl() {
+    const url = window.location.href;
+    navigator.clipboard.writeText(url)
+        .then(() => {
+            alert('Page URL copied to clipboard!');
+        })
+        .catch((error) => {
+            console.error('Failed to copy URL: ', error);
+            // Fallback
+            const textArea = document.createElement('textarea');
+            textArea.value = url;
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textArea);
+            alert('Page URL copied to clipboard!');
+        });
+}
+
+function copyUrl() {
+    const url = downloadlink;
+    navigator.clipboard.writeText(url)
+        .then(() => {
+            alert('Download URL copied to clipboard!');
+        })
+        .catch((error) => {
+            console.error('Failed to copy URL: ', error);
+            // Fallback
+            const textArea = document.createElement('textarea');
+            textArea.value = url;
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textArea);
+            alert('Download URL copied to clipboard!');
+        });
+}
+
+// Enable text selection
+document.addEventListener('DOMContentLoaded', function() {
+    const cardElements = document.querySelectorAll('.card-title, .card-text');
+    cardElements.forEach(element => {
+        element.style.userSelect = 'text';
+        element.style.webkitUserSelect = 'text';
+    });
+});
     
 </script>
 </body>

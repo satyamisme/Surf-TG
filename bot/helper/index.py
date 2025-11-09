@@ -59,22 +59,31 @@ async def get_files(chat_id, page=1):
 async def posts_file(posts, chat_id):
     phtml = """
             <div class="col">
-                
-                    <div class="card text-white bg-primary mb-3">
-                        <input type="checkbox" class="admin-only form-check-input position-absolute top-0 end-0 m-2"
-                            onchange="checkSendButton()" id="selectCheckbox"
-                            data-id="{id}|{hash}|{title}|{size}|{type}|{img}">
-                        <img src="https://cdn.jsdelivr.net/gh/weebzone/weebzone/data/Surf-TG/src/loading.gif" class="lzy_img card-img-top rounded-top"
-                            data-src="{img}" alt="{title}">
-                        <a href="/watch/{chat_id}?id={id}&hash={hash}">
-                        <div class="card-body p-1">
-                            <h6 class="card-title">{title}</h6>
-                            <span class="badge bg-warning">{type}</span>
-                            <span class="badge bg-info">{size}</span>
-                        </div>
-                        </a>
+                <div class="card text-white bg-primary mb-3">
+                    <input type="checkbox" class="admin-only form-check-input position-absolute top-0 end-0 m-2"
+                        onchange="checkSendButton()" id="selectCheckbox"
+                        data-id="{id}|{hash}|{title}|{size}|{type}|{img}">
+                    <img src="https://cdn.jsdelivr.net/gh/weebzone/weebzone/data/Surf-TG/src/loading.gif" class="lzy_img card-img-top rounded-top"
+                        data-src="{img}" alt="{title}">
+                    <a href="/watch/{chat_id}?id={id}&hash={hash}">
+                    <div class="card-body p-1">
+                        <h6 class="card-title" style="user-select: text; -webkit-user-select: text;">{title}</h6>
+                        <span class="badge bg-warning">{type}</span>
+                        <span class="badge bg-info">{size}</span>
                     </div>
-                
+                    </a>
+                </div>
             </div>
 """
-    return ''.join(phtml.format(chat_id=str(chat_id).replace("-100", ""), id=post["msg_id"], img=f"/api/thumb/{chat_id}?id={post['msg_id']}", title=post["title"], hash=post["hash"], size=post['size'], type=post['type']) for post in posts)
+    # Handle global search results (chat_id might be 'global')
+    display_chat_id = str(chat_id).replace("-100", "") if chat_id != 'global' else 'global'
+
+    return ''.join(phtml.format(
+        chat_id=display_chat_id,
+        id=post["msg_id"],
+        img=f"/api/thumb/{post.get('chat_id', chat_id)}?id={post['msg_id']}" if chat_id != 'global' else f"/api/thumb/{post['chat_id']}?id={post['msg_id']}",
+        title=post["title"],
+        hash=post["hash"],
+        size=post['size'],
+        type=post['type']
+    ) for post in posts)
