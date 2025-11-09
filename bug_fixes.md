@@ -6,46 +6,27 @@
 
 ### Bug Description
 
-The application was failing to start, throwing the following error:
+The application was failing to start inside its Docker container, throwing a `RuntimeError: There is no current event loop in thread 'MainThread'`.
 
-```
-Traceback (most recent call last):
-  File "<frozen runpy>", line 198, in _run_module_as_main
-  File "<frozen runpy>", line 88, in _run_code
-  File "/app/bot/__main__.py", line 5, in <module>
-    from pyrogram import idle
-  File "/usr/local/lib/python3.12/site-packages/pyrogram/__init__.py", line 42, in <module>
-    from .sync import idle, compose  # pylint: disable=wrong-import-position
-    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.12/site-packages/pyrogram/sync.py", line 100, in <module>
-    wrap(Methods)
-  File "/usr/local/lib/python3.12/site-packages/pyrogram/sync.py", line 96, in wrap
-    async_to_sync(source, name)
-  File "/usr/local/lib/python3.12/site-packages/pyrogram/sync.py", line 32, in async_to_sync
-    main_loop = asyncio.get_event_loop()
-                ^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.12/site-packages/uvloop/__init__.py", line 206, in get_event_loop
-    raise RuntimeError(
-RuntimeError: There is no current event loop in thread 'MainThread'.
-```
+The root cause was that the `pyrogram` library attempts to access the `asyncio` event loop as soon as it is imported. In a standard script, this happens before the application has a chance to configure or initialize the event loop, leading to a crash. Previous attempts to fix this by installing `uvloop` at the top of the script were insufficient because the import order still caused a race condition.
 
-This issue was caused by an incompatibility between recent versions of Python (3.10+), `asyncio`, `pyrogram`, and `uvloop`. The `pyrogram` library attempts to access the `asyncio` event loop before it has been properly initialized by `uvloop`, leading to a `RuntimeError`.
+### The Launcher Script Solution
 
-### Fix
+A more robust solution was implemented to ensure the `asyncio` event loop is correctly configured *before* any part of the application, especially `pyrogram`, is imported.
 
-The fix involved two steps:
+1.  **Created `launch.py`:** A new entry point script, `launch.py`, was created in the root directory. Its sole initial responsibility is to set the appropriate `asyncio` event loop policy for the operating system. Only after the policy is set does it proceed to import the bot's modules and start the application.
 
-1.  **Updating the `UPSTREAM_REPO` in `update.py`:** The `update.py` script was configured to pull updates from the original `weebzone/Surf-TG` repository, which would overwrite any local changes. This was changed to `https://github.com/satyamisme/Surf-TG` to prevent the fix from being overwritten.
-2.  **Installing `uvloop` at startup:** The `uvloop` event loop is now explicitly installed at the very beginning of the application's entry point (`bot/__main__.py`). This ensures that `uvloop` is installed before any other `asyncio`-dependent libraries are imported, preventing the `RuntimeError`.
+2.  **Simplified `bot/__main__.py`:** The original entry point was simplified to a small script that adds the project's root directory to the system path and then calls the `launch.py` script. This maintains the `python -m bot` command structure while ensuring the correct startup sequence.
 
-```python
-import uvloop
-uvloop.install()
-```
+3.  **Removed `uvloop`:** To avoid potential conflicts and simplify the environment, the `uvloop` dependency was removed from `requirements.txt`. The default `asyncio` event loop is now used.
+
+4.  **Updated `Dockerfile`:** The `Dockerfile` was updated to use `python3 launch.py` as its `CMD`, making the new launcher the official entry point for the container.
+
+This approach guarantees that the event loop is ready before any library can try to access it, definitively resolving the startup error.
 
 ### Timeline
 
-- **2025-11-08:** Initial bug was reported and investigated.
-- **2025-11-08:** First fix was implemented, but was overwritten by the `update.py` script.
-- **2025-11-08:** The `update.py` script was fixed to point to the correct repository.
-- **2025-11-08:** The `uvloop` fix was re-applied.
+-   **2025-11-08:** Bug was reported and investigated.
+-   **2025-11-08:** Initial fixes were attempted (`uvloop.install()`, updating `update.py`) but did not resolve the underlying import-order issue.
+-   **2025-11-08:** Root cause was correctly identified as an import-time event loop conflict with Pyrogram.
+-   **2025-11-08:** The robust launcher script solution was implemented and tested.
