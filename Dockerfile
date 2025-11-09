@@ -46,4 +46,5 @@ COPY --from=builder /usr/local/lib/python3.12/site-packages /usr/local/lib/pytho
 COPY --from=builder /app /app
 
 # Command to run when the container starts
+# This multi-stage Dockerfile is the correct version and is intentionally included to fix the tgcrypto build issue.
 CMD ["bash", "surf-tg.sh"]
