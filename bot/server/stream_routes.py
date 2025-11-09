@@ -7,13 +7,13 @@ from aiohttp import web
 from aiohttp.http_exceptions import BadStatusLine
 from bot.helper.chats import get_chats, post_playlist, posts_chat, posts_db_file
 from bot.helper.database import Database
-from bot.helper.search import search, global_search
+from bot.helper.search import search
 from bot.helper.thumbnail import get_image
 from bot.telegram import work_loads, multi_clients
 from aiohttp_session import get_session
 from bot.config import Telegram
 from bot.helper.exceptions import FIleNotFound, InvalidHash
-from bot.helper.index import get_files, posts_file
+from bot.helper.index import get_files, posts_file, index_channel_files
 from bot.server.custom_dl import ByteStreamer
 from bot.server.render_template import render_page
 from bot.helper.cache import rm_cache
@@ -224,6 +224,22 @@ async def home_route(request):
         session['redirect_url'] = request.path_qs
         return web.HTTPFound('/login')
 
+@routes.get(r'/index/{chat_id:\d+}')
+async def index_channel_route(request):
+    session = await get_session(request)
+    if (username := session.get('user')) != Telegram.ADMIN_USERNAME:
+        return web.json_response({'msg': 'Admins only'}, status=403)
+
+    chat_id = request.match_info['chat_id']
+    chat_id = f"-100{chat_id}"
+
+    try:
+        await index_channel_files(chat_id)
+        return web.HTTPFound(f'/channel/{chat_id.replace("-100", "")}')
+    except Exception as e:
+        logging.critical(e.with_traceback(None))
+        return web.HTTPInternalServerError(text=f"Failed to index channel: {e}")
+
 
 @routes.get('/playlist')
 async def playlist_route(request):
@@ -269,7 +285,7 @@ async def dbsearch_route(request):
         return web.HTTPFound('/login')
 
 
-@routes.get('/channel/{chat_id}')
+@routes.get(r'/channel/{chat_id:\d+}')
 async def channel_route(request):
     session = await get_session(request)
     if username := session.get('user'):
@@ -290,29 +306,7 @@ async def channel_route(request):
         return web.HTTPFound('/login')
 
 
-# Add these new routes
-@routes.get('/global-search')
-async def global_search_route(request):
-    session = await get_session(request)
-    if username := session.get('user'):
-        page = request.query.get('page', '1')
-        query = request.query.get('q')
-        is_admin = username == Telegram.ADMIN_USERNAME
-
-        try:
-            posts = await global_search(query=query, page=page)
-            phtml = await posts_file(posts, 'global')  # Modified posts_file to handle global results
-            text = f"Global Search: {query}"
-            return web.Response(text=await render_page(None, None, route='index', html=phtml, msg=text, chat_id='global', is_admin=is_admin), content_type='text/html')
-        except Exception as e:
-            logging.critical(e.with_traceback(None))
-            raise web.HTTPInternalServerError(text=str(e)) from e
-    else:
-        session['redirect_url'] = request.path_qs
-        return web.HTTPFound('/login')
-
-# Enhance existing search route
-@routes.get('/search/{chat_id}')
+@routes.get(r'/search/{chat_id:\d+}')
 async def search_route(request):
     session = await get_session(request)
     if username := session.get('user'):
@@ -321,9 +315,8 @@ async def search_route(request):
         page = request.query.get('page', '1')
         query = request.query.get('q')
         is_admin = username == Telegram.ADMIN_USERNAME
-
         try:
-            posts = await search(chat_id, query=query, page=page)
+            posts = await search(chat_id, page=page, query=query)
             phtml = await posts_file(posts, chat_id)
             chat = await StreamBot.get_chat(int(chat_id))
             text = f"{chat.title} - {query}"
@@ -336,7 +329,7 @@ async def search_route(request):
         return web.HTTPFound('/login')
 
 
-@routes.get('/api/thumb/{chat_id}', allow_head=True)
+@routes.get(r'/api/thumb/{chat_id:\d+}', allow_head=True)
 async def get_thumbnail(request):
     chat_id = request.match_info['chat_id']
     if message_id := request.query.get('id'):
@@ -348,7 +341,7 @@ async def get_thumbnail(request):
     return response
 
 
-@routes.get('/watch/{chat_id}', allow_head=True)
+@routes.get(r'/watch/{chat_id:\d+}', allow_head=True)
 async def stream_handler_watch(request: web.Request):
     session = await get_session(request)
     if username := session.get('user'):
@@ -373,7 +366,7 @@ async def stream_handler_watch(request: web.Request):
         return web.HTTPFound('/login')
 
 
-@routes.get('/{chat_id}/{encoded_name}', allow_head=True)
+@routes.get(r'/{chat_id:\d+}/{encoded_name}', allow_head=True)
 async def stream_handler(request: web.Request):
     try:
         chat_id = request.match_info['chat_id']
