@@ -6,39 +6,27 @@
 
 ### Bug Description
 
-The application was failing for two primary reasons:
+The application was failing to build and run for a combination of reasons:
 
-1.  **Docker Build Failure:** The Docker image build process was failing with a `error: command 'gcc' failed: No such file or directory`. This was because the `tgcrypto` library requires a C compiler to be installed, but the `Dockerfile` was using a minimal base image that did not include the necessary build tools. Additionally, even when the build tools were present, the final image was missing the Python executable and other binaries.
-
-2.  **Runtime Error:** When the application was run, it would crash on startup with a `RuntimeError: There is no current event loop in thread 'MainThread'`. The root cause was that the `pyrogram` library attempts to access the `asyncio` event loop as soon as it is imported, which happened before the application could properly configure the loop.
+1.  **Docker Build Failure:** The Docker image was failing to build because the `tgcrypto` library required C compilers (`gcc`) that were not present in the base image.
+2.  **`update.py` Overwriting Fixes:** The `surf-tg.sh` script, which is the container's entry point, runs an `update.py` script that would reset the repository to an upstream fork, deleting any applied fixes on every startup.
+3.  **`RuntimeError`:** The application would crash on startup with a `RuntimeError: There is no current event loop in thread 'MainThread'`. This was caused by an import order issue where `pyrogram` was imported before the `asyncio` event loop could be initialized.
 
 ### The Final Solution
 
-A comprehensive solution was implemented to address both the build and runtime issues.
+A comprehensive, multi-part solution was implemented to address all of these issues.
 
-1.  **Corrected the `Dockerfile`:** The `Dockerfile` was updated to a correct, multi-stage `alpine`-based version. This version correctly installs the necessary build tools (like `gcc` via the `build-base` package) in a temporary "builder" stage, which allows `tgcrypto` to compile successfully. It also includes the crucial `COPY --from=builder /usr/local/bin /usr/local/bin` command, which copies the Python executable and other binaries from the builder stage to the final image. This resolved the build failure and ensured the final image was runnable.
+1.  **Restored the `Dockerfile`:** The `Dockerfile` was restored to its original, multi-stage `alpine`-based version. This version correctly installs the necessary build tools (like `gcc` via the `build-base` package) in a temporary "builder" stage, which allows `tgcrypto` to compile successfully.
 
-2.  **Event Loop Initialization in `bot/__init__.py`:** The `bot/__init__.py` file was modified to explicitly create and set the `asyncio` event loop at the very beginning of the script. The following code was added:
+2.  **Fixed `update.py`:** The `update.py` script was modified to point to the user's preferred fork (`https://github.com/satyamisme/Surf-TG`), preventing the fixes from being overwritten on container startup.
 
-    ```python
-    import asyncio
+3.  **Corrected Import Order in `bot/__main__.py`:** The import order in `bot/__main__.py` was corrected to ensure that `from bot import LOGGER` is called *before* any `pyrogram` imports. This triggers the event loop initialization at the correct time.
 
-    try:
-        import uvloop
-        uvloop.install()
-        # Explicitly create and set the loop so it's available early
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        print("✅ uvloop installed and event loop initialized globally.")
-    except Exception as e:
-        print(f"⚠️ uvloop not available: {e}")
-    ```
-
-    By executing this code the moment the `bot` package is first imported, it guarantees that a valid event loop exists before any other part of the application is loaded, definitively resolving the runtime error.
+4.  **Event Loop Initialization in `bot/__init__.py`:** The `bot/__init__.py` file was modified to explicitly create and set the `asyncio` event loop at the very beginning of the script. This guarantees that a valid event loop exists before any other part of the application is loaded, definitively resolving the runtime error.
 
 ### Timeline
 
 -   **2025-11-08:** Initial bug was reported and investigated.
--   **2025-11-08:** A Docker build failure was identified due to a missing C compiler and missing Python binaries in the final image.
--   **2025-11-08:** A runtime error was identified due to a missing `asyncio` event loop.
--   **2025-11-08:** The final, correct fix for both the build and runtime errors was identified and implemented.
+-   **2025-11-08:** The `update.py` script was identified as the cause of fixes being overwritten.
+-   **2025-11-08:** The import order in `bot/__main__.py` was identified as the cause of the `RuntimeError`.
+-   **2025-11-08:** The final, correct fix for all identified issues was implemented.
