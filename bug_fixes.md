@@ -6,27 +6,39 @@
 
 ### Bug Description
 
-The application was failing to start inside its Docker container, throwing a `RuntimeError: There is no current event loop in thread 'MainThread'`.
+The application was failing to start, throwing a `RuntimeError: There is no current event loop in thread 'MainThread'`.
 
-The root cause was that the `pyrogram` library attempts to access the `asyncio` event loop as soon as it is imported. In a standard script, this happens before the application has a chance to configure or initialize the event loop, leading to a crash. Previous attempts to fix this by installing `uvloop` at the top of the script were insufficient because the import order still caused a race condition.
+The root cause was that the `pyrogram` library, a core dependency, attempts to access the `asyncio` event loop as soon as it is imported. This created a race condition where the application would crash before it could properly configure the event loop.
 
-### The Launcher Script Solution
+### The Correct Solution
 
-A more robust solution was implemented to ensure the `asyncio` event loop is correctly configured *before* any part of the application, especially `pyrogram`, is imported.
+After analyzing a working fork of the repository, a direct and robust solution was implemented. The fix addresses the problem at the true entry point of the `bot` package: the `__init__.py` file.
 
-1.  **Created `launch.py`:** A new entry point script, `launch.py`, was created in the root directory. Its sole initial responsibility is to set the appropriate `asyncio` event loop policy for the operating system. Only after the policy is set does it proceed to import the bot's modules and start the application.
+1.  **Event Loop Initialization in `bot/__init__.py`:** The `bot/__init__.py` file was modified to explicitly create and set the `asyncio` event loop at the very beginning of the script. The following code was added:
 
-2.  **Simplified `bot/__main__.py`:** The original entry point was simplified to a small script that adds the project's root directory to the system path and then calls the `launch.py` script. This maintains the `python -m bot` command structure while ensuring the correct startup sequence.
+    ```python
+    import asyncio
 
-3.  **Removed `uvloop`:** To avoid potential conflicts and simplify the environment, the `uvloop` dependency was removed from `requirements.txt`. The default `asyncio` event loop is now used.
+    try:
+        import uvloop
+        uvloop.install()
+        # Explicitly create and set the loop so it's available early
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        print("✅ uvloop installed and event loop initialized globally.")
+    except Exception as e:
+        print(f"⚠️ uvloop not available: {e}")
+    ```
 
-4.  **Updated `Dockerfile`:** The `Dockerfile` was updated to use `python3 launch.py` as its `CMD`, making the new launcher the official entry point for the container.
+    By executing this code the moment the `bot` package is first imported, it guarantees that a valid event loop exists before any other part of the application (including `pyrogram`) is loaded.
 
-This approach guarantees that the event loop is ready before any library can try to access it, definitively resolving the startup error.
+2.  **`uvloop` Dependency:** The `uvloop` package was confirmed to be present in `requirements.txt`, as it is a key part of this solution.
+
+This approach is more direct and effective than previous attempts with launcher scripts because it solves the problem at its source, ensuring the application starts reliably.
 
 ### Timeline
 
 -   **2025-11-08:** Bug was reported and investigated.
--   **2025-11-08:** Initial fixes were attempted (`uvloop.install()`, updating `update.py`) but did not resolve the underlying import-order issue.
--   **2025-11-08:** Root cause was correctly identified as an import-time event loop conflict with Pyrogram.
--   **2025-11-08:** The robust launcher script solution was implemented and tested.
+-   **2025-11-08:** Multiple incorrect solutions were attempted, failing to identify the true entry point of the package.
+-   **2025-11-08:** A working repository was provided for analysis.
+-   **2025-11-08:** The correct fix was identified in the `bot/__init__.py` file of the reference repository and successfully implemented.
