@@ -111,13 +111,23 @@
         <button type="button" class="admin-only btn btn-secondary btn-sm" data-bs-toggle="modal"
             data-bs-target="#sendFileModal" onclick="sendPopupForm()">Send</button>
     </div>
-    <div class="container">
-        <form class="d-flex" style="margin: auto; padding-top: 10px; padding-bottom: 20px;"
-            action="/search/<!-- Chat_id -->" method="get">
-            <input class="form-control me-sm-2" type="search" placeholder="Search" name="q">
-            <button class="btn btn-secondary my-sm-0" type="submit">Search</button>
-        </form>
-    </div>
+<!-- Add global search form -->
+<div class="container">
+    <form class="d-flex" style="margin: auto; padding-top: 10px; padding-bottom: 20px;"
+          action="/search/<!-- Chat_id -->" method="get">
+        <input class="form-control me-sm-2" type="search" placeholder="Search in this channel" name="q"
+               onpaste="return true" oncopy="return true" oncut="return true">
+        <button class="btn btn-secondary my-sm-0" type="submit">Search</button>
+    </form>
+
+    <!-- Global Search Form -->
+    <form class="d-flex" style="margin: auto; padding-top: 10px; padding-bottom: 20px;"
+          action="/global-search" method="get">
+        <input class="form-control me-sm-2" type="search" placeholder="Global Search (all channels)" name="q"
+               onpaste="return true" oncopy="return true" oncut="return true">
+        <button class="btn btn-warning my-sm-0" type="submit">Global Search</button>
+    </form>
+</div>
 
     <div class="container py-2">
         <!-- Telegram File Grid Card  -->
