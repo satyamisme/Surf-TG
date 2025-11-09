@@ -12,7 +12,6 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/weebzone/weebzone/data/Surf-TG/css/plyr.css">
     <script src="https://cdn.plyr.io/3.7.8/plyr.polyfilled.js"></script>
     <link rel="stylesheet" href="https://bootswatch.com/5/<!-- Theme -->/bootstrap.min.css">
-    <script disable-devtool-auto src='https://cdn.jsdelivr.net/npm/disable-devtool'></script>
     <style>
         body {
             height: 100vh;
@@ -115,12 +114,13 @@
         </div>
     </div>
     <div class="container d-flex justify-content-center align-items-center" style="width: 100%; padding: 0 5px;">
-        <div onclick="mx_player()" class="btn btn-primary">MX Player</div>
-        <div onclick="vlc_player()" class="btn btn-primary">VLC Mobile</div>
-        <div onclick="km_player()" class="btn btn-primary">KM Player</div>
-        <div onclick="get_file()" class="btn btn-primary">Get File</div>
-        <div onclick="copyUrl()" class="btn btn-primary">Copy Url</div>
-        <div onclick="download()" class="btn btn-primary">Download</div>
+        <button onclick="mx_player()" class="btn btn-primary">MX Player</button>
+        <button onclick="vlc_player()" class="btn btn-primary">VLC Mobile</button>
+        <button onclick="km_player()" class="btn btn-primary">KM Player</button>
+        <button onclick="get_file()" class="btn btn-primary">Get File</button>
+        <button onclick="copyUrl()" class="btn btn-primary">Copy Url</button>
+        <button onclick="download()" class="btn btn-primary">Download</button>
+        <button onclick="share()" class="btn btn-primary">Share</button>
     </div>
     <footer class="footer mt-auto py-3 text-muted text-center" style="color: white;">
         <div class="container d-flex justify-content-center align-items-center" style="width: 100%; padding: 0 10px;">
@@ -192,6 +192,20 @@
             .catch((error) => {
                 console.error('Failed to copy URL: ', error);
             });
+    }
+
+    function share() {
+        if (navigator.share) {
+            navigator.share({
+                title: '<!-- Filename -->',
+                url: downloadlink
+            }).then(() => {
+                console.log('Thanks for sharing!');
+            })
+            .catch(console.error);
+        } else {
+            copyUrl();
+        }
     }
     function updateVideoSource() {
         const videoElement = document.getElementById('player');
