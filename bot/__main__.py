@@ -8,6 +8,7 @@ from bot.config import Telegram
 from bot.server import web_server
 from bot.telegram import StreamBot, UserBot
 from bot.telegram.clients import initialize_clients
+from bot.telegram import start
 
 loop = get_event_loop()
 
