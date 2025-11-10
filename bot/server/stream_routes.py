@@ -212,11 +212,15 @@ async def editConfig_route(request):
 async def home_route(request):
     """Redirect to the main channel page"""
     # You can set a default channel ID here
-    default_chat_id = Telegram.AUTH_CHANNEL
-    return web.HTTPFound(f'/home/{default_chat_id}')
+    default_chat_id = Telegram.AUTH_CHANNEL[0] if Telegram.AUTH_CHANNEL else None
+    if default_chat_id:
+        return web.HTTPFound(f'/home/{default_chat_id}')
+    else:
+        # Handle case where AUTH_CHANNEL is not set
+        return web.Response(text="AUTH_CHANNEL not configured", status=500)
 
 
-@routes.get(r'/home/{chat_id:\d+}')
+@routes.get(r'/home/{chat_id:-?\d+}')
 async def home_page(request):
     """Render the main dashboard"""
     session = await get_session(request)
@@ -396,7 +400,7 @@ async def start_index_api(request):
     if not session.get('logged_in'):
         return web.json_response({"error": "Not authenticated"}, status=401)
 
-    chat_id = request.match_info['chat_id']
+    chat_id = f"-100{request.match_info['chat_id']}"
     result = await start_background_index(chat_id)
     return web.json_response(result)
 
@@ -407,14 +411,14 @@ async def stop_index_api(request):
     if not session.get('logged_in'):
         return web.json_response({"error": "Not authenticated"}, status=401)
 
-    chat_id = request.match_info['chat_id']
+    chat_id = f"-100{request.match_info['chat_id']}"
     result = await stop_background_index(chat_id)
     return web.json_response(result)
 
 @routes.get('/api/index/stats/{chat_id}')
 async def get_index_stats_api(request):
     """Get indexing progress"""
-    chat_id = request.match_info['chat_id']
+    chat_id = f"-100{request.match_info['chat_id']}"
     stats = await db.get_index_stats(chat_id)
 
     # Calculate progress percentage and ETA
