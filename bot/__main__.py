@@ -1,58 +1,60 @@
-from bot import __version__, LOGGER
-from asyncio import get_event_loop, sleep as asleep
-from traceback import format_exc
+import base64
+import os
+import asyncio
 from aiohttp import web
-from pyrogram import idle
+from aiohttp_session import setup
+from aiohttp_session.cookie_storage import EncryptedCookieStorage
+
+from bot.server.stream_routes import routes
 from bot.config import Telegram
-from bot.server import web_server
+from bot import LOGGER
 from bot.telegram import StreamBot, UserBot
 from bot.telegram.clients import initialize_clients
-from bot.server.stream_routes import routes
-
-loop = get_event_loop()
 
 async def start_services():
-    LOGGER.info(f'Initializing Surf-TG v-{__version__}')
-    await asleep(1.2)
+    SECRET_KEY = base64.urlsafe_b64decode(os.environ.get('SESSION_SECRET', 'a'*32).encode())
 
-    await StreamBot.start()
-    StreamBot.username = StreamBot.me.username
-    LOGGER.info(f"Bot Client : [@{StreamBot.username}]")
-    if len(Telegram.SESSION_STRING) != 0:
-        await UserBot.start()
-        UserBot.username = UserBot.me.username or UserBot.me.first_name or UserBot.me.id
-        LOGGER.info(f"User Client : {UserBot.username}")
-
-    await asleep(1.2)
-    LOGGER.info("Initializing Multi Clients")
-    await initialize_clients()
-
-    await asleep(2)
     app = web.Application()
+
+    # Setup session middleware with encrypted cookie storage
+    setup(app, EncryptedCookieStorage(SECRET_KEY))
+
+    # Register routes from stream_routes.py
     app.router.add_routes(routes)
+
+    # Serve static files such as CSS, JS, images
     app.router.add_static('/static', path='bot/server/static', name='static')
 
+    # Setup Web server runner
     runner = web.AppRunner(app)
     await runner.setup()
     site = web.TCPSite(runner, '0.0.0.0', Telegram.PORT)
     await site.start()
 
-    LOGGER.info("Surf-TG Started Revolving !")
-    await idle()
+    LOGGER.info(f"Surf-TG started on port {Telegram.PORT}")
 
-async def stop_clients():
+    # Start bot clients
+    await StreamBot.start()
+    LOGGER.info(f"Bot Client {StreamBot.username} started")
+
+    if Telegram.SESSION_STRING:
+        await UserBot.start()
+        LOGGER.info(f"User Client {UserBot.username} started")
+
+    await initialize_clients()
+    await asyncio.Event().wait()  # Keeps the app running
+
+async def stop_services():
     await StreamBot.stop()
-    if len(Telegram.SESSION_STRING) != 0:
+    if Telegram.SESSION_STRING:
         await UserBot.stop()
 
-
 if __name__ == '__main__':
+    loop = asyncio.get_event_loop()
     try:
         loop.run_until_complete(start_services())
     except KeyboardInterrupt:
-        LOGGER.info('Service Stopping...')
-    except Exception:
-        LOGGER.error(format_exc())
+        LOGGER.info("Stopping Surf-TG...")
     finally:
-        loop.run_until_complete(stop_clients())
-        loop.stop()
+        loop.run_until_complete(stop_services())
+        loop.close()

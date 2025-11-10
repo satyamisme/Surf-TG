@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Channels</h2>
+
+<div class="row row-cols-1 row-cols-md-4 g-3">
+  {% for channel in channels %}
+  <div class="col">
+    <div class="card h-100">
+      <img src="{{ channel.thumbnail_url }}" class="card-img-top" alt="Channel thumbnail for {{ channel.name }}">
+      <div class="card-body">
+        <h5 class="card-title">{{ channel.name }}</h5>
+        <p class="card-text">{{ channel.description or "No description available." }}</p>
+        <a href="/rhome/{{ channel.chat_id }}" class="btn btn-primary">View Channel</a>
+      </div>
+    </div>
+  </div>
+  {% else %}
+  <p>No channels found.</p>
+  {% endfor %}
+</div>
+
+{% endblock %}

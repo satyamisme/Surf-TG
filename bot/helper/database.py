@@ -336,14 +336,13 @@ class Database:
             LOGGER.error(f"Error getting last indexed ID: {e}")
             return 1
 
-    async def search_tgfiles(self, id, query, page=1, per_page=1000):
+    async def search_files(self, query, page=1, per_page=1000):
         """Optimized search using MongoDB text index"""
         if not query or query.strip() == '':
-            return await self.list_tgfiles(id=id, page=page, per_page=per_page)
+            return []
 
         # Main query using text search
         search_query = {
-            'chat_id': id,
             '$text': {'$search': query}
         }
 

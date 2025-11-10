@@ -1,98 +1,66 @@
-<!-- Extend base.html in render_page -->
-<div class="hero-section">
-    <h1 class="hero-title">Welcome to Surf-TG</h1>
-    <p class="hero-subtitle">Your powerful Telegram file streaming platform</p>
-</div>
+{% extends "base.html" %}
 
-<!-- Search Bar -->
-<div class="search-container">
-    <form action="/search" method="get" class="search-wrapper">
-        <i class="bi bi-search search-icon"></i>
-        <input type="text" name="q" class="search-input" placeholder="Search files, channels, videos...">
-        <button type="submit" class="search-btn"><i class="bi bi-arrow-right"></i></button>
-    </form>
-</div>
+{% block content %}
+<h1 class="mb-4">Welcome to Surf-TG</h1>
 
-<!-- Stats Cards -->
-<div class="row stats-container">
-    <div class="col-md-3">
-        <div class="card stat-card">
-            <div class="card-body text-center">
-                <div class="stat-icon"><i class="bi bi-files"></i></div>
-                <h2 id="total-files">0</h2>
-                <p class="stat-label">Total Files</p>
-                <span class="stat-trend up"><i class="bi bi-arrow-up"></i> 12% this week</span>
-            </div>
-        </div>
+<section class="row text-center mb-5" aria-label="Statistics">
+  <div class="col-6 col-md-3 mb-3">
+    <div class="card py-3 shadow-sm">
+      <h3 id="total-files">0</h3>
+      <p>Total Files</p>
     </div>
-    <!-- Add more stat cards -->
-</div>
-
-<!-- Realtime Progress Section -->
-<div class="card index-progress-section">
-    <div class="card-body">
-        <div class="progress-header">
-            <h3><i class="bi bi-arrow-clockwise"></i> Indexing Progress</h3>
-            <div>
-                <button class="btn btn-primary me-2" id="start-index">Start</button>
-                <button class="btn btn-danger me-2" id="stop-index" disabled>Stop</button>
-                <button class="btn btn-secondary" id="refresh-stats">Refresh</button>
-            </div>
-        </div>
-        <div class="progress mb-4">
-            <div id="progress-fill" class="progress-bar" style="width: 0%">0%</div>
-        </div>
-        <div class="row progress-details">
-            <div class="col-md-3"><div class="progress-item-value" id="indexed-count">0</div><div>Files Indexed</div></div>
-            <div class="col-md-3"><div class="progress-item-value" id="remaining-count">0</div><div>Remaining</div></div>
-            <div class="col-md-3"><div class="progress-item-value" id="failed-count">0</div><div>Failed</div></div>
-            <div class="col-md-3"><div class="progress-item-value" id="eta-time">--</div><div>ETA</div></div>
-        </div>
+  </div>
+  <div class="col-6 col-md-3 mb-3">
+    <div class="card py-3 shadow-sm">
+      <h3 id="active-channels">0</h3>
+      <p>Active Channels</p>
     </div>
-</div>
+  </div>
+  <div class="col-6 col-md-3 mb-3">
+    <div class="card py-3 shadow-sm">
+      <h3 id="total-downloads">0</h3>
+      <p>Total Downloads</p>
+    </div>
+  </div>
+  <div class="col-6 col-md-3 mb-3">
+    <div class="card py-3 shadow-sm">
+      <h3 id="total-storage">0</h3>
+      <p>Total Storage</p>
+    </div>
+  </div>
+</section>
 
+<section aria-label="Indexing Control">
+  <button id="start-index" class="btn btn-primary me-2">Start</button>
+  <button id="stop-index" class="btn btn-danger me-2" disabled>Stop</button>
+  <button id="refresh-stats" class="btn btn-secondary">Refresh</button>
+
+  <div class="progress mt-3" style="height: 30px;">
+    <div id="progress-bar" class="progress-bar" role="progressbar" style="width: 0%;">0%</div>
+  </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
 <script>
-    // Realtime stats polling
-    async function fetchGlobalStats() {
-        try {
-            const response = await fetch('/api/stats/global');
-            const data = await response.json();
-            document.getElementById('total-files').textContent = data.total_files.toLocaleString();
-            // Update other stats
-        } catch (error) {
-            console.error('Error fetching stats:', error);
-        }
+  async function updateStats() {
+    try {
+      const response = await fetch('/api/stats/global');
+      const data = await response.json();
+      document.getElementById('total-files').textContent = data.total_files.toLocaleString();
+      document.getElementById('active-channels').textContent = data.total_channels.toLocaleString();
+      document.getElementById('total-downloads').textContent = data.total_downloads.toLocaleString();
+      document.getElementById('total-storage').textContent = data.total_storage.toLocaleString();
+      document.getElementById('progress-bar').style.width = data.progress_percent + '%';
+      document.getElementById('progress-bar').textContent = data.progress_percent + '%';
+    } catch (e) {
+      console.error('Error updating stats:', e);
     }
+  }
 
-    async function fetchIndexStats(chatId = null) {
-        try {
-            let url = '/api/index/stats';
-            if (chatId) url += `/${chatId}`;
-            const response = await fetch(url);
-            const stats = await response.json();
-
-            document.getElementById('progress-fill').style.width = stats.progress_percent + '%';
-            document.getElementById('progress-fill').textContent = stats.progress_percent + '%';
-            // Update other progress elements
-        } catch (error) {
-            console.error('Error fetching index stats:', error);
-        }
-    }
-
-    // Poll every 2 seconds for realtime updates
-    setInterval(() => {
-        fetchGlobalStats();
-        fetchIndexStats();
-    }, 2000);
-
-    // Initial load
-    document.addEventListener('DOMContentLoaded', () => {
-        fetchGlobalStats();
-        fetchIndexStats();
-    });
-
-    // Button handlers (implement start/stop indexing)
-    document.getElementById('start-index').addEventListener('click', async () => {
-        // Implement start indexing API call
-    });
+  window.onload = () => {
+    updateStats();
+    setInterval(updateStats, 3000);
+  };
 </script>
+{% endblock %}
