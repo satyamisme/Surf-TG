@@ -3,13 +3,15 @@ import logging
 import math
 import mimetypes
 import secrets
+from datetime import datetime, timezone
 from aiohttp import web
 from aiohttp.http_exceptions import BadStatusLine
 from bot.helper.chats import get_chats, post_playlist, posts_chat, posts_db_file
 from bot.helper.database import Database
-from bot.helper.search import search
+from bot.helper.search import search, global_search
 from bot.helper.thumbnail import get_image
 from bot.telegram import work_loads, multi_clients
+from bot.helper.indexer import start_background_index, stop_background_index
 from aiohttp_session import get_session
 from bot.config import Telegram
 from bot.helper.exceptions import FIleNotFound, InvalidHash
@@ -208,22 +210,41 @@ async def editConfig_route(request):
 
 @routes.get('/')
 async def home_route(request):
+    """Redirect to the main channel page"""
+    # You can set a default channel ID here
+    default_chat_id = Telegram.AUTH_CHANNEL
+    return web.HTTPFound(f'/home/{default_chat_id}')
+
+
+@routes.get(r'/home/{chat_id:\d+}')
+async def home_page(request):
+    """Render the main dashboard"""
     session = await get_session(request)
-    if username := session.get('user'):
-        try:
-            channels = await get_chats()
-            playlists = await db.get_Dbfolder()
-            phtml = await posts_chat(channels)
-            dhtml = await post_playlist(playlists)
-            is_admin = username == Telegram.ADMIN_USERNAME
-            return web.Response(text=await render_page(None, None, route='home', html=phtml, playlist=dhtml, is_admin=is_admin), content_type='text/html')
-        except Exception as e:
-            logging.critical(e.with_traceback(None))
-            raise web.HTTPInternalServerError(text=str(e)) from e
-    else:
+    if not (username := session.get('user')):
         session['redirect_url'] = request.path_qs
         return web.HTTPFound('/login')
 
+    chat_id = request.match_info['chat_id']
+    is_admin = username == Telegram.ADMIN_USERNAME
+
+    try:
+        # Fetching data for the template
+        channels = await get_chats()
+        playlists = await db.get_Dbfolder()
+        phtml = await posts_chat(channels)
+        dhtml = await post_playlist(playlists)
+
+        # Render the page with chat_id
+        return web.Response(
+            text=await render_page(
+                None, None, route='home', html=phtml, playlist=dhtml,
+                is_admin=is_admin, chat_id=chat_id
+            ),
+            content_type='text/html'
+        )
+    except Exception as e:
+        logging.critical(f"Error in home_page: {e}", exc_info=True)
+        raise web.HTTPInternalServerError(text="An internal server error occurred.")
 
 
 @routes.get(r'/index/{chat_id:\d+}')
@@ -367,6 +388,71 @@ async def stream_handler_watch(request: web.Request):
         session['redirect_url'] = request.path_qs
         return web.HTTPFound('/login')
 
+
+@routes.post('/api/index/start/{chat_id}')
+async def start_index_api(request):
+    """Start channel indexing"""
+    session = await get_session(request)
+    if not session.get('logged_in'):
+        return web.json_response({"error": "Not authenticated"}, status=401)
+
+    chat_id = request.match_info['chat_id']
+    result = await start_background_index(chat_id)
+    return web.json_response(result)
+
+@routes.post('/api/index/stop/{chat_id}')
+async def stop_index_api(request):
+    """Stop channel indexing"""
+    session = await get_session(request)
+    if not session.get('logged_in'):
+        return web.json_response({"error": "Not authenticated"}, status=401)
+
+    chat_id = request.match_info['chat_id']
+    result = await stop_background_index(chat_id)
+    return web.json_response(result)
+
+@routes.get('/api/index/stats/{chat_id}')
+async def get_index_stats_api(request):
+    """Get indexing progress"""
+    chat_id = request.match_info['chat_id']
+    stats = await db.get_index_stats(chat_id)
+
+    # Calculate progress percentage and ETA
+    if stats['total_messages'] > 0:
+        progress = (stats['indexed_count'] / stats['total_messages']) * 100
+
+        # Calculate ETA
+        if stats.get('start_time') and stats.get('indexed_count', 0) > 0:
+            start_time = stats['start_time']
+            if isinstance(start_time, (int, float)):
+                start_time = datetime.fromtimestamp(start_time, tz=timezone.utc)
+
+            elapsed = (datetime.now(timezone.utc) - start_time).total_seconds()
+            rate = stats['indexed_count'] / elapsed
+            remaining = stats['total_messages'] - stats['indexed_count']
+            eta_seconds = remaining / rate if rate > 0 else 0
+            stats['eta_minutes'] = round(eta_seconds / 60, 1)
+        else:
+            stats['eta_minutes'] = None
+
+        stats['progress_percent'] = round(progress, 1)
+    else:
+        stats['progress_percent'] = 0
+        stats['eta_minutes'] = None
+
+    return web.json_response(stats)
+
+@routes.get('/api/stats/global')
+async def get_global_stats(request):
+    """Get global indexing statistics"""
+    total_files = await db.get_total_indexed_files()
+    channel_stats = await db.get_channel_stats()
+
+    return web.json_response({
+        "total_files": total_files,
+        "total_channels": len(channel_stats),
+        "channels": channel_stats
+    })
 
 @routes.get(r'/{chat_id:\d+}/{encoded_name}', allow_head=True)
 async def stream_handler(request: web.Request):

@@ -37,7 +37,7 @@ async def render_page(id, secure_hash, is_admin=False, html='', playlist='', dat
             html = (await f.read()).replace("<!-- Error -->", msg or '').replace("<!-- Theme -->", theme.lower()).replace("<!-- RedirectURL -->", redirect_url)
     elif route == 'home':
         async with aiopen(ospath.join(tpath, 'home.html'), 'r') as f:
-            html = (await f.read()).replace("<!-- Print -->", html).replace("<!-- Theme -->", theme.lower()).replace("<!-- Playlist -->", playlist)
+            html = (await f.read()).replace("<!-- Print -->", html).replace("<!-- Theme -->", theme.lower()).replace("<!-- Playlist -->", playlist).replace("<!-- Chat ID -->", chat_id)
             if not is_admin:
                 html += admin_block
                 if Telegram.HIDE_CHANNEL:

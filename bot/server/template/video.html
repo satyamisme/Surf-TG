@@ -97,6 +97,54 @@ input[type="search"], input[type="text"] {
     -webkit-user-select: text !important;
 }
 </style>
+<style>
+    .video-container {
+        max-width: 1200px;
+        margin: 2rem auto;
+        background: white;
+        border-radius: 20px;
+        overflow: hidden;
+        box-shadow: 0 4px 30px rgba(0,0,0,0.1);
+    }
+
+    .video-player {
+        position: relative;
+        width: 100%;
+        aspect-ratio: 16/9;
+    }
+
+    .video-info-panel {
+        padding: 2rem;
+    }
+
+    .video-title {
+        font-size: 1.8rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+    }
+
+    .video-actions {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+
+    .action-button {
+        padding: 0.8rem 1.5rem;
+        border-radius: 50px;
+        border: none;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .action-button:hover {
+        transform: scale(1.05);
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+    }
+</style>
 </head>
 
 <body>

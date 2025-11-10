@@ -1,210 +1,820 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" href="https://cdn.jsdelivr.net/gh/weebzone/weebzone/data/Surf-TG/src/ico2.png" type="image/x-icon">
-    <link rel="shortcut icon" href="https://cdn.jsdelivr.net/gh/weebzone/weebzone/data/Surf-TG/src/ico2.png"
-        type="image/x-icon">
-    <title>Surf-TG: Home</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
-        integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
-    <link rel="stylesheet" href="https://bootswatch.com/5/<!-- Theme -->/bootstrap.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
-        integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
-        crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/gh/weebzone/weebzone/data/Surf-TG/js/SurfTG.js"></script>
-    <script disable-devtool-auto src='https://cdn.jsdelivr.net/npm/disable-devtool'></script>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="icon" href="https://cdn.jsdelivr.net/gh/weebzone/WEEBZONE@latest/data/Surf-TG/src/ico2.png" type="image/x-icon">
+    <title>Surf-TG Dashboard</title>
+
+    <!-- Bootstrap 5.3 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --success-gradient: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+            --danger-gradient: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+            --info-gradient: linear-gradient(135deg, #30cfd0 0%, #330867 100%);
+            --card-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            --card-hover-shadow: 0 8px 30px rgba(0,0,0,0.12);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Modern Navbar */
+        .navbar {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 2px 20px rgba(0,0,0,0.05);
+            padding: 1rem 0;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .navbar-brand {
+            font-weight: 700;
+            font-size: 1.5rem;
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .nav-link {
+            font-weight: 500;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .nav-link:hover {
+            color: #667eea !important;
+        }
+
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            width: 0;
+            height: 2px;
+            background: var(--primary-gradient);
+            transition: all 0.3s ease;
+            transform: translateX(-50%);
+        }
+
+        .nav-link:hover::after {
+            width: 80%;
+        }
+
+        /* Hero Section */
+        .hero-section {
+            padding: 3rem 0;
+            position: relative;
+        }
+
+        .hero-title {
+            font-size: 3rem;
+            font-weight: 800;
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 1rem;
+        }
+
+        .hero-subtitle {
+            font-size: 1.2rem;
+            color: #64748b;
+            margin-bottom: 2rem;
+        }
+
+        /* Search Bar */
+        .search-container {
+            max-width: 700px;
+            margin: 2rem auto;
+            position: relative;
+        }
+
+        .search-wrapper {
+            position: relative;
+            background: white;
+            border-radius: 50px;
+            box-shadow: var(--card-shadow);
+            transition: all 0.3s ease;
+        }
+
+        .search-wrapper:focus-within {
+            box-shadow: var(--card-hover-shadow);
+            transform: translateY(-2px);
+        }
+
+        .search-input {
+            border: none;
+            padding: 1.2rem 5rem 1.2rem 3rem;
+            font-size: 1.1rem;
+            border-radius: 50px;
+            width: 100%;
+            outline: none;
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 1.5rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #94a3b8;
+            font-size: 1.5rem;
+        }
+
+        .search-btn {
+            position: absolute;
+            right: 0.5rem;
+            top: 50%;
+            transform: translateY(-50%);
+            background: var(--primary-gradient);
+            border: none;
+            padding: 0.8rem 2rem;
+            border-radius: 50px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .search-btn:hover {
+            transform: translateY(-50%) scale(1.05);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        /* Stats Cards */
+        .stats-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin: 3rem 0;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: var(--card-shadow);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--card-hover-shadow);
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: var(--primary-gradient);
+        }
+
+        .stat-card.success::before {
+            background: var(--success-gradient);
+        }
+
+        .stat-card.danger::before {
+            background: var(--danger-gradient);
+        }
+
+        .stat-card.info::before {
+            background: var(--info-gradient);
+        }
+
+        .stat-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            background: var(--primary-gradient);
+            color: white;
+        }
+
+        .stat-card.success .stat-icon {
+            background: var(--success-gradient);
+        }
+
+        .stat-card.danger .stat-icon {
+            background: var(--danger-gradient);
+        }
+
+        .stat-card.info .stat-icon {
+            background: var(--info-gradient);
+        }
+
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: #1e293b;
+            margin: 0.5rem 0;
+        }
+
+        .stat-label {
+            color: #64748b;
+            font-weight: 500;
+            font-size: 1rem;
+        }
+
+        .stat-trend {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            margin-top: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .stat-trend.up {
+            color: #22c55e;
+        }
+
+        .stat-trend.down {
+            color: #ef4444;
+        }
+
+        /* Channel Cards */
+        .channels-section {
+            margin: 3rem 0;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .section-title {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #1e293b;
+        }
+
+        .view-all-btn {
+            background: var(--primary-gradient);
+            color: white;
+            padding: 0.7rem 1.5rem;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .view-all-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+            color: white;
+        }
+
+        .channel-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+
+        .channel-card {
+            background: white;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: var(--card-shadow);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .channel-card:hover {
+            transform: translateY(-8px);
+            box-shadow: var(--card-hover-shadow);
+        }
+
+        .channel-thumbnail {
+            width: 100%;
+            height: 180px;
+            object-fit: cover;
+            background: var(--primary-gradient);
+        }
+
+        .channel-info {
+            padding: 1.5rem;
+        }
+
+        .channel-name {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 0.5rem;
+        }
+
+        .channel-meta {
+            display: flex;
+            gap: 1.5rem;
+            color: #64748b;
+            font-size: 0.9rem;
+            margin-top: 1rem;
+        }
+
+        .channel-meta span {
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+
+        /* Index Progress Section */
+        .index-progress-section {
+            background: white;
+            border-radius: 20px;
+            padding: 2rem;
+            margin: 3rem 0;
+            box-shadow: var(--card-shadow);
+        }
+
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .progress-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .progress-actions {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .btn-modern {
+            padding: 0.7rem 1.5rem;
+            border-radius: 50px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-modern.primary {
+            background: var(--primary-gradient);
+            color: white;
+        }
+
+        .btn-modern.primary:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-modern.danger {
+            background: var(--danger-gradient);
+            color: white;
+        }
+
+        .btn-modern.secondary {
+            background: #e2e8f0;
+            color: #475569;
+        }
+
+        .progress-bar-modern {
+            height: 40px;
+            background: #f1f5f9;
+            border-radius: 50px;
+            overflow: hidden;
+            position: relative;
+            margin: 2rem 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--success-gradient);
+            border-radius: 50px;
+            transition: width 0.5s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+            position: relative;
+        }
+
+        .progress-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            animation: shimmer 2s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        .progress-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .progress-item {
+            text-align: center;
+            padding: 1rem;
+            background: #f8fafc;
+            border-radius: 15px;
+        }
+
+        .progress-item-value {
+            font-size: 2rem;
+            font-weight: 800;
+            color: #1e293b;
+        }
+
+        .progress-item-label {
+            color: #64748b;
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+        }
+
+        /* Footer */
+        .footer {
+            background: white;
+            padding: 2rem 0;
+            margin-top: auto;
+            box-shadow: 0 -2px 20px rgba(0,0,0,0.05);
+        }
+
+        .footer-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .footer-text {
+            color: #64748b;
+        }
+
+        .footer-links {
+            display: flex;
+            gap: 2rem;
+        }
+
+        .footer-links a {
+            color: #64748b;
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        .footer-links a:hover {
+            color: #667eea;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .hero-title {
+                font-size: 2rem;
+            }
+
+            .search-input {
+                padding: 1rem 4rem 1rem 2.5rem;
+                font-size: 1rem;
+            }
+
+            .search-btn {
+                padding: 0.6rem 1.5rem;
+            }
+
+            .stats-container {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+
+            .channel-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Loading Animation */
+        .skeleton {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            animation: loading 1.5s infinite;
+        }
+
+        @keyframes loading {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+    </style>
 </head>
-<style>
-    a {
-        text-decoration: none;
-    }
-
-    ::-webkit-scrollbar {
-        width: 5px;
-    }
-
-    ::-webkit-scrollbar-thumb {
-        background: #888;
-    }
-
-    ::-webkit-scrollbar-thumb:hover {
-        background: #555;
-    }
-
-    html {
-        position: relative;
-        min-height: 100%;
-    }
-
-    body {
-        margin-bottom: 60px;
-    }
-
-    .footer {
-        position: absolute;
-        bottom: 0;
-        width: 100%;
-        height: 60px;
-    }
-
-    .col {
-        transition: all 0.3s;
-    }
-
-    .col:hover {
-        transform: scale(1.05);
-    }
-</style>
-
 <body>
-    <div class="admin-only modal fade" id="editConfigModal" aria-labelledby="editConfigModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-body">
-                    <form action="/config" method="post">
-                        <label for="edit_channel">Auth Channel:</label>
-                        <input type="text" class="form-control" id="edit_channel" name="channel" value=""><br>
-                        <label for="edit_theme">Theme:</label>
-                        <input type="text" class="form-control" id="edit_theme" name="theme" value="<!-- Theme -->"><br>
-                        <div class="d-flex justify-content-end">
-                            <button type="submit" class="btn btn-primary me-2"
-                                onclick="submitEditConfigForm()">Submit</button>
-                            <button type="button" class="btn btn-secondary me-2" data-bs-dismiss="modal">Close</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="admin-only modal fade" id="createFolderModal" aria-labelledby="createFolderModalLabel"
-        aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-body">
-                    <form action="/create" method="post">
-                        <label for="folderName" class="form-label">Folder Name</label>
-                        <input type="text" class="form-control" id="folderName" name="folderName"
-                            placeholder="Enter folder name">
-                        <label for="thumbnail" class="form-label">Thumbnail</label>
-                        <input type="text" class="form-control" id="thumbnail" name="thumbnail"
-                            placeholder="Thumbnail url"><br>
-                        <input type="hidden" id="parent_dir" name="parent_dir" readonly>
-                        <div class="d-flex justify-content-end">
-                            <button type="button" class="btn btn-secondary me-2" data-bs-dismiss="modal">Close</button>
-                            <button type="submit" class="btn btn-primary">Create</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="admin-only modal fade" id="editFolderModal" aria-labelledby="editFolderModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-body">
-                    <form action="/edit" method="post">
-                        <input type="hidden" id="edit_folder_id" name="folder_id" value="">
-                        <input type="hidden" id="edit_parent" name="parent" value="">
-                        <label for="edit_folderName">Folder Name:</label>
-                        <input type="text" class="form-control" id="edit_folderName" name="folderName" value=""><br>
-                        <label for="edit_thumbnail">Thumbnail:</label>
-                        <input type="text" class="form-control" id="edit_thumbnail" name="thumbnail" value=""><br>
-                        <div class="d-flex justify-content-end">
-                            <button type="submit" class="btn btn-primary me-2"
-                                onclick="submitEditForm()">Submit</button>
-                            <button type="button" class="btn btn-secondary me-2" data-bs-dismiss="modal">Close</button>
-                            <button type="button" class="btn btn-danger" onclick="deleteItem()">Delete</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <nav class="navbar navbar-expand-lg bg-primary mb-3 p-1" data-bs-theme="dark">
-        <div class="container-fluid">
+    <!-- Modern Navbar -->
+    <nav class="navbar navbar-expand-lg">
+        <div class="container">
             <a class="navbar-brand" href="/">
-                <img src="https://cdn.jsdelivr.net/gh/weebzone/weebzone/data/Surf-TG/src/logo%20(2).png" alt="Logo"
-                    height="40">
+                <i class="bi bi-tsunami"></i> Surf-TG
             </a>
-            <div class="d-flex">
-                <button type="button" class="admin-only btn btn-primary me-1 btn-sm" data-bs-toggle="modal"
-                    data-bs-target="#editConfigModal"><i
-                        class="bi bi-pencil"></i></button>
-                <form action="/reload" method="get" role="reload" class="admin-only ">
-                    <button type="submit" class="btn btn-primary me-1 btn-sm" name="chatId" value="home">
-                        <i class="bi bi-arrow-clockwise"></i>
-                    </button>
-                </form>
-                <form id="signoutForm" action="/logout" method="post" class="d-flex" role="logout">
-                    <button type="submit" class="btn btn-secondary btn-sm"><i class="bi bi-box-arrow-left"></i>
-                        Logout</button>
-                </form>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/"><i class="bi bi-house-door"></i> Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/channels"><i class="bi bi-collection"></i> Channels</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/search"><i class="bi bi-search"></i> Search</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/settings"><i class="bi bi-gear"></i> Settings</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/logout"><i class="bi bi-box-arrow-right"></i> Logout</a>
+                    </li>
+                </ul>
             </div>
         </div>
     </nav>
-    <div class="container d-flex align-items-center justify-content-center">
-        <div class="card mx-auto text-center">
-            <div class="card-header">Available Sources</div>
+
+    <!-- Hero Section -->
+    <section class="hero-section">
+        <div class="container text-center">
+            <h1 class="hero-title">Welcome to Surf-TG</h1>
+            <p class="hero-subtitle">Your powerful Telegram file streaming platform</p>
+
+            <!-- Search Bar -->
+            <div class="search-container">
+                <form action="/search" method="get" class="search-wrapper">
+                    <i class="bi bi-search search-icon"></i>
+                    <input type="text" name="q" class="search-input" placeholder="Search files, channels, videos..." autocomplete="off">
+                    <button type="submit" class="search-btn">
+                        <i class="bi bi-arrow-right"></i>
+                    </button>
+                </form>
+            </div>
         </div>
-        <button type="button" class="admin-only btn btn-secondary btn-sm" data-bs-toggle="modal"
-            data-bs-target="#createFolderModal" onclick="createPopupForm(event)">Create Folder</button>
-    </div>
-    <div class="container py-2">
-        <!-- Channel grid  -->
-        <div class="hide-channel row row-cols-2 row-cols-md-4 row-cols-lg-6 g-2">
-            <!-- Channel card  -->
-            <!-- Print -->
+    </section>
+
+    <!-- Stats Section -->
+    <section class="container">
+        <div class="stats-container">
+            <div class="stat-card">
+                <div class="stat-icon"><i class="bi bi-files"></i></div>
+                <div class="stat-value" id="total-files">0</div>
+                <div class="stat-label">Total Files</div>
+                <div class="stat-trend up">
+                    <i class="bi bi-arrow-up"></i> 12% this week
+                </div>
+            </div>
+
+            <div class="stat-card success">
+                <div class="stat-icon"><i class="bi bi-collection"></i></div>
+                <div class="stat-value" id="total-channels">0</div>
+                <div class="stat-label">Active Channels</div>
+                <div class="stat-trend up">
+                    <i class="bi bi-arrow-up"></i> 8% this month
+                </div>
+            </div>
+
+            <div class="stat-card danger">
+                <div class="stat-icon"><i class="bi bi-cloud-arrow-down"></i></div>
+                <div class="stat-value">4.2M</div>
+                <div class="stat-label">Total Downloads</div>
+                <div class="stat-trend up">
+                    <i class="bi bi-arrow-up"></i> 25% today
+                </div>
+            </div>
+
+            <div class="stat-card info">
+                <div class="stat-icon"><i class="bi bi-hdd"></i></div>
+                <div class="stat-value">852 GB</div>
+                <div class="stat-label">Total Storage</div>
+                <div class="stat-trend down">
+                    <i class="bi bi-arrow-down"></i> 3% available
+                </div>
+            </div>
         </div>
-        <!-- Folder grid  -->
-        <div class="row row-cols-2 row-cols-md-4 row-cols-lg-6 g-2">
-            <!-- Folder card  -->
-            <!-- Playlist -->
+    </section>
+
+    <!-- Index Progress Section -->
+    <section class="container">
+        <div class="index-progress-section">
+            <div class="progress-header">
+                <h3 class="progress-title"><i class="bi bi-arrow-clockwise"></i> Indexing Progress</h3>
+                <div class="progress-actions">
+                    <button class="btn-modern primary" id="start-index">
+                        <i class="bi bi-play-fill"></i> Start
+                    </button>
+                    <button class="btn-modern danger" id="stop-index" disabled>
+                        <i class="bi bi-stop-fill"></i> Stop
+                    </button>
+                    <button class="btn-modern secondary" id="refresh-stats">
+                        <i class="bi bi-arrow-clockwise"></i> Refresh
+                    </button>
+                </div>
+            </div>
+
+            <div class="progress-bar-modern">
+                <div class="progress-fill" id="progress-fill" style="width: 0%">
+                    <span id="progress-percentage">0%</span>
+                </div>
+            </div>
+
+            <div class="progress-details">
+                <div class="progress-item">
+                    <div class="progress-item-value" id="indexed-count">0</div>
+                    <div class="progress-item-label">Files Indexed</div>
+                </div>
+                <div class="progress-item">
+                    <div class="progress-item-value" id="remaining-count">0</div>
+                    <div class="progress-item-label">Remaining</div>
+                </div>
+                <div class="progress-item">
+                    <div class="progress-item-value" id="failed-count">0</div>
+                    <div class="progress-item-label">Failed</div>
+                </div>
+                <div class="progress-item">
+                    <div class="progress-item-value" id="eta-time">--</div>
+                    <div class="progress-item-label">ETA</div>
+                </div>
+            </div>
         </div>
-    </div>
-    <footer class="footer mt-auto py-3 text-muted text-center" style="color: white;">
-        <div class="container d-flex justify-content-center align-items-center" style="width: 100%; padding: 0 10px;">
-            <p class="float-end">
-            <p>Made with <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-heart-fill" fill="red"
-                    xmlns="http://www.w3.org/2000/svg">
-                    <path fill-rule="evenodd"
-                        d="M8 1.314C12.438-3.248 23.534 4.735 8 15-7.534 4.736 3.562-3.248 8 1.314z" />
-                </svg> by <a href="https://github.com/weebzone" target="_blank">Karan Adhikari</a><br>
-                &copy; 2024 <a href="https://github.com/weebzone/Surf-TG" target="_blank">Surf-TG</a>. All Rights
-                Reserved.
-            </p>
+    </section>
+
+    <!-- Channels Section -->
+    <section class="container channels-section">
+        <div class="section-header">
+            <h2 class="section-title">Recent Channels</h2>
+            <a href="/channels" class="view-all-btn">
+                View All <i class="bi bi-arrow-right"></i>
+            </a>
+        </div>
+
+        <div class="channel-grid" id="channels-container">
+            <!-- Channels will be loaded here -->
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-text">
+                    © 2025 Surf-TG. All rights reserved.
+                </div>
+                <div class="footer-links">
+                    <a href="/about">About</a>
+                    <a href="/privacy">Privacy</a>
+                    <a href="/terms">Terms</a>
+                    <a href="/contact">Contact</a>
+                </div>
+            </div>
         </div>
     </footer>
-</body>
-<script>
-    function setDefaultChannelValue() {
-        const channelCards = document.querySelectorAll('.channel-card');
 
-        const cids = Array.from(channelCards).map(card => {
-            const link = card.querySelector('a');
-            console.log(link)
-            if (link) {
-                const cid = link.getAttribute('href').split('/').pop();
-                return `-100${cid}`;
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Configuration
+        const chatId = "<!-- Chat ID -->"; // Replace with actual chat ID
+        let pollInterval = null;
+
+        // Fetch global statistics
+        async function fetchGlobalStats() {
+            try {
+                const response = await fetch('/api/stats/global');
+                const data = await response.json();
+
+                document.getElementById('total-files').textContent = data.total_files.toLocaleString();
+                document.getElementById('total-channels').textContent = data.total_channels;
+            } catch (error) {
+                console.error('Error fetching stats:', error);
             }
-            return null;
-        }).filter(cid => cid !== null);
+        }
 
-        const channelInput = document.getElementById('edit_channel');
-        channelInput.value = cids.join(', ');
-    }
+        // Fetch indexing progress
+        async function fetchIndexStats() {
+            try {
+                const response = await fetch(`/api/index/stats/${chatId}`);
+                const stats = await response.json();
 
-    document.addEventListener('DOMContentLoaded', function () {
-        const editConfigModal = document.getElementById('editConfigModal');
-        editConfigModal.addEventListener('show.bs.modal', function () {
-            setDefaultChannelValue();
+                // Update progress bar
+                const percentage = stats.progress_percent || 0;
+                document.getElementById('progress-fill').style.width = `${percentage}%`;
+                document.getElementById('progress-percentage').textContent = `${percentage}%`;
+
+                // Update counts
+                document.getElementById('indexed-count').textContent = stats.indexed_count.toLocaleString();
+                document.getElementById('remaining-count').textContent = (stats.total_messages - stats.indexed_count).toLocaleString();
+                document.getElementById('failed-count').textContent = stats.failed_count;
+                document.getElementById('eta-time').textContent = stats.eta_minutes ? `${stats.eta_minutes}m` : '--';
+
+                // Update button states
+                if (stats.status === 'indexing') {
+                    document.getElementById('start-index').disabled = true;
+                    document.getElementById('stop-index').disabled = false;
+                } else {
+                    document.getElementById('start-index').disabled = false;
+                    document.getElementById('stop-index').disabled = true;
+                }
+            } catch (error) {
+                console.error('Error fetching index stats:', error);
+            }
+        }
+
+        // Start indexing
+        async function startIndexing() {
+            try {
+                const response = await fetch(`/api/index/start/${chatId}`, { method: 'POST' });
+                const result = await response.json();
+
+                if (result.error) {
+                    alert(result.error);
+                } else {
+                    startPolling();
+                }
+            } catch (error) {
+                console.error('Error starting index:', error);
+            }
+        }
+
+        // Stop indexing
+        async function stopIndexing() {
+            try {
+                await fetch(`/api/index/stop/${chatId}`, { method: 'POST' });
+                stopPolling();
+                fetchIndexStats();
+            } catch (error) {
+                console.error('Error stopping index:', error);
+            }
+        }
+
+        // Polling functions
+        function startPolling() {
+            stopPolling();
+            pollInterval = setInterval(fetchIndexStats, 2000);
+        }
+
+        function stopPolling() {
+            if (pollInterval) {
+                clearInterval(pollInterval);
+                pollInterval = null;
+            }
+        }
+
+        // Event listeners
+        document.getElementById('start-index').addEventListener('click', startIndexing);
+        document.getElementById('stop-index').addEventListener('click', stopIndexing);
+        document.getElementById('refresh-stats').addEventListener('click', () => {
+            fetchGlobalStats();
+            fetchIndexStats();
         });
-    });
 
-</script>
+        // Initial load
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchGlobalStats();
+            fetchIndexStats();
+        });
+    </script>
+</body>
 </html>

@@ -1,8 +1,9 @@
-from pymongo import DESCENDING, MongoClient, UpdateOne
+from pymongo import DESCENDING, MongoClient, UpdateOne, TEXT
 from bson import ObjectId
 from bot.config import Telegram
 import re
 import datetime
+from datetime import timezone
 from bot import LOGGER
 
 
@@ -14,6 +15,79 @@ class Database:
         self.collection = self.db["playlist"]
         self.config = self.db["config"]
         self.files = self.db["files"]
+        self.index_status = self.db["index_status"]  # New collection
+
+        self._create_indexes()
+
+    def _create_indexes(self):
+        """Create text indexes for fast searching"""
+        try:
+            self.collection.create_index([("name", TEXT)], default_language="english")
+            self.collection.create_index([("parent_folder", 1), ("type", 1)])
+            self.collection.create_index([("file_id", DESCENDING)])
+            self.files.create_index([("title", TEXT)], default_language="english")
+            self.files.create_index([("chat_id", 1), ("msg_id", DESCENDING)])
+            self.files.create_index([("chat_id", 1), ("hash", 1)], unique=True)
+        except Exception as e:
+            print(f"Index creation: {e}")
+
+    # Statistics methods
+    async def get_index_stats(self, chat_id):
+        """Get indexing statistics for a channel"""
+        stats = self.index_status.find_one({"chat_id": str(chat_id)})
+        if not stats:
+            return {
+                "chat_id": str(chat_id),
+                "status": "not_started",
+                "total_messages": 0,
+                "indexed_count": 0,
+                "failed_count": 0,
+                "start_time": None,
+                "last_update": None,
+                "estimated_completion": None,
+                "last_indexed_id": 0
+            }
+        return stats
+
+    async def update_index_stats(self, chat_id, total=None, indexed=None,
+                                 failed=None, status=None, last_id=None):
+        """Update indexing progress"""
+        update_data = {"last_update": datetime.now(timezone.utc)}
+
+        if total is not None:
+            update_data["total_messages"] = total
+        if indexed is not None:
+            update_data["indexed_count"] = indexed
+        if failed is not None:
+            update_data["failed_count"] = failed
+        if status is not None:
+            update_data["status"] = status
+        if last_id is not None:
+            update_data["last_indexed_id"] = last_id
+
+        self.index_status.update_one(
+            {"chat_id": str(chat_id)},
+            {"$set": update_data},
+            upsert=True
+        )
+
+    async def get_total_indexed_files(self, chat_id=None):
+        """Get total indexed files count"""
+        query = {"chat_id": str(chat_id)} if chat_id else {}
+        return self.files.count_documents(query)
+
+    async def get_channel_stats(self):
+        """Get statistics for all indexed channels"""
+        pipeline = [
+            {
+                "$group": {
+                    "_id": "$chat_id",
+                    "count": {"$sum": 1},
+                    "total_size": {"$sum": "$size"}
+                }
+            }
+        ]
+        return list(self.files.aggregate(pipeline))
 
     async def create_folder(self, parent_id, folder_name, thumbnail):
         folder = {"parent_folder": parent_id, "name": folder_name,
@@ -263,30 +337,26 @@ class Database:
             return 1
 
     async def search_tgfiles(self, id, query, page=1, per_page=1000):
-        """Enhanced Telegram files search with global results"""
+        """Optimized search using MongoDB text index"""
         if not query or query.strip() == '':
             return await self.list_tgfiles(id=id, page=page, per_page=per_page)
 
-        # Multiple search strategies
-        search_conditions = []
+        # Main query using text search
+        search_query = {
+            'chat_id': id,
+            '$text': {'$search': query}
+        }
 
-        # 1. Direct partial match (case-insensitive)
-        regex_query = {'$regex': f'.*{re.escape(query)}.*', '$options': 'i'}
-        search_conditions.append({'chat_id': id, 'title': regex_query})
-
-        # 2. Word-by-word matching for better results
-        words = query.lower().split()
-        if len(words) > 1:
-            for word in words:
-                if len(word) > 2:  # Only search for words longer than 2 characters
-                    word_regex = {'$regex': f'.*{re.escape(word)}.*', '$options': 'i'}
-                    search_conditions.append({'chat_id': id, 'title': word_regex})
-
-        # Combine all conditions with OR
-        final_query = {'$or': search_conditions} if len(search_conditions) > 1 else search_conditions[0]
+        # Projection to add a score for relevance
+        projection = {'score': {'$meta': 'textScore'}}
 
         offset = (int(page) - 1) * per_page
-        mydoc = self.files.find(final_query).sort('msg_id', DESCENDING).skip(offset).limit(per_page)
+
+        # Execute search and sort by relevance score
+        mydoc = self.files.find(search_query, projection).sort(
+            [('score', {'$meta': 'textScore'})]
+        ).skip(offset).limit(per_page)
+
         return list(mydoc)
 
     async def global_search_files(self, query, page=1, per_page=1000):
