@@ -113,7 +113,7 @@ async def index_channel_files(chat_id):
                 "type": file.mime_type
             })
 
-    await db.bulk_add_tgfiles(all_files)
+    await db.add_btgfiles(all_files)
 
 async def posts_file(posts, chat_id):
     phtml = """
