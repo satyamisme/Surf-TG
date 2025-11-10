@@ -565,3 +565,7 @@ async def media_streamer(request: web.Request, chat_id: int, id: int, secure_has
             "Accept-Ranges": "bytes",
         },
     )
+
+@routes.get('/{tail:.*}')
+async def catch_all_404(request):
+    return web.Response(text="404 Not Found: The requested resource does not exist.", status=404)

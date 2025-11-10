@@ -1,14 +1,13 @@
 from bot import __version__, LOGGER
-from asyncio import get_event_loop, sleep as asleep, gather
+from asyncio import get_event_loop, sleep as asleep
 from traceback import format_exc
-
 from aiohttp import web
 from pyrogram import idle
 from bot.config import Telegram
 from bot.server import web_server
 from bot.telegram import StreamBot, UserBot
 from bot.telegram.clients import initialize_clients
-from bot.telegram import start
+from bot.server.stream_routes import routes
 
 loop = get_event_loop()
 
@@ -29,16 +28,14 @@ async def start_services():
     await initialize_clients()
 
     await asleep(2)
-    LOGGER.info('Initalizing Surf Web Server..')
-    server = web.AppRunner(await web_server())
-    LOGGER.info("Server CleanUp!")
-    await server.cleanup()
+    app = web.Application()
+    app.router.add_routes(routes)
+    app.router.add_static('/static', path='bot/server/static', name='static')
 
-    await asleep(2)
-    LOGGER.info("Server Setup Started !")
-
-    await server.setup()
-    await web.TCPSite(server, '0.0.0.0', Telegram.PORT).start()
+    runner = web.AppRunner(app)
+    await runner.setup()
+    site = web.TCPSite(runner, '0.0.0.0', Telegram.PORT)
+    await site.start()
 
     LOGGER.info("Surf-TG Started Revolving !")
     await idle()
