@@ -357,15 +357,3 @@ class Database:
         ).skip(offset).limit(per_page)
 
         return list(mydoc)
-
-    async def global_search_files(self, query, page=1, per_page=1000):
-        """Search across all files in database"""
-        if not query or query.strip() == '':
-            return []
-
-        regex_query = {'$regex': f'.*{re.escape(query)}.*', '$options': 'i'}
-        search_query = {'title': regex_query}
-
-        offset = (int(page) - 1) * per_page
-        mydoc = self.files.find(search_query).sort('msg_id', DESCENDING).skip(offset).limit(per_page)
-        return list(mydoc)

@@ -8,4 +8,4 @@ async def search(chat_id, query, page=1):
 
 async def global_search(query, page=1):
     """Global search across all authorized channels"""
-    return await db.global_search_files(query=query, page=page)
+    return await db.search_files(query=query, page=page)

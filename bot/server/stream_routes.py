@@ -153,6 +153,40 @@ async def settings_page(request):
         logging.exception("Settings page error")
         return web.Response(text="Internal server error", status=500)
 
+@routes.get('/api/stats/global')
+async def global_stats(request):
+    db = request.app['db']
+    total_files = await db.get_total_indexed_files()
+    channel_stats = await db.get_channel_stats()
+    total_channels = len(channel_stats)
+
+    total_storage = sum(channel.get('total_size', 0) for channel in channel_stats)
+
+    return web.json_response({
+        'total_files': total_files,
+        'total_channels': total_channels,
+        'total_storage_gb': round(total_storage / (1024**3), 2)
+    })
+
+@routes.get('/api/index/stats/{chat_id}')
+async def index_stats(request):
+    chat_id = request.match_info['chat_id']
+    db = request.app['db']
+    stats = await db.get_index_stats(chat_id)
+    return web.json_response(stats)
+
+@routes.post('/api/index/start/{chat_id}')
+async def start_indexing(request):
+    chat_id = request.match_info['chat_id']
+    # Placeholder for starting the indexing process
+    return web.json_response({'status': 'indexing_started', 'chat_id': chat_id})
+
+@routes.post('/api/index/stop/{chat_id}')
+async def stop_indexing(request):
+    chat_id = request.match_info['chat_id']
+    # Placeholder for stopping the indexing process
+    return web.json_response({'status': 'indexing_stopped', 'chat_id': chat_id})
+
 @routes.get('/{tail:.*}')
 async def catch_all_404(request):
     return web.Response(text="404 Not Found", status=404)

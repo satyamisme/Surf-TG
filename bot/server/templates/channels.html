@@ -6,11 +6,11 @@
   {% for channel in channels %}
   <div class="col">
     <div class="card h-100">
-      <img src="{{ channel.thumbnail_url }}" class="card-img-top" alt="Channel thumbnail for {{ channel.name }}">
+      <img src="{{ channel.thumb_url if channel.thumb_url else '/static/placeholder.jpg' }}" class="card-img-top" alt="Channel thumbnail for {{ channel.name }}">
       <div class="card-body">
         <h5 class="card-title">{{ channel.name }}</h5>
         <p class="card-text">{{ channel.description or "No description available." }}</p>
-        <a href="/rhome/{{ channel.chat_id }}" class="btn btn-primary">View Channel</a>
+        <a href="/channel/{{ channel.chat_id }}" class="btn btn-primary">View Channel</a>
       </div>
     </div>
   </div>

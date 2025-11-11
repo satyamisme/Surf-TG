@@ -23,6 +23,21 @@
     .card:hover {
       box-shadow: 0 8px 30px rgba(0,0,0,0.15);
     }
+    .card, .video-player {
+        max-width: 100%;
+    }
+
+    @media (min-width: 768px) {
+        .card, .video-player {
+            max-width: 75%;
+        }
+    }
+
+    @media (min-width: 992px) {
+        .card, .video-player {
+            max-width: 48%;
+        }
+    }
   </style>
 </head>
 <body>

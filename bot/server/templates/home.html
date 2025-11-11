@@ -49,9 +49,9 @@
       const data = await response.json();
       document.getElementById('total-files').textContent = data.total_files.toLocaleString();
       document.getElementById('active-channels').textContent = data.total_channels.toLocaleString();
-      document.getElementById('total-downloads').textContent = data.total_downloads.toLocaleString();
-      document.getElementById('total-storage').textContent = data.total_storage.toLocaleString();
-      document.getElementById('progress-bar').style.width = data.progress_percent + '%';
+      document.getElementById('total-downloads').textContent = data.total_downloads ? data.total_downloads.toLocaleString() : 'N/A';
+      document.getElementById('total-storage').textContent = data.total_storage_gb + ' GB';
+      document.getElementById('progress-bar').style.width = data.progress_percent ? data.progress_percent + '%' : '0%';
       document.getElementById('progress-bar').textContent = data.progress_percent + '%';
     } catch (e) {
       console.error('Error updating stats:', e);
