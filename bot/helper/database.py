@@ -29,7 +29,7 @@ class Database:
             self.files.create_index([("chat_id", 1), ("msg_id", DESCENDING)])
             self.files.create_index([("chat_id", 1), ("hash", 1)], unique=True)
         except Exception as e:
-            print(f"Index creation: {e}")
+            LOGGER.error(f"Index creation error: {e}", exc_info=True)
 
     # Statistics methods
     async def get_index_stats(self, chat_id):
@@ -104,7 +104,23 @@ class Database:
             result = self.collection.delete_one({'_id': ObjectId(document_id)})
             return result.deleted_count > 0
         except Exception as e:
-            print(f'An error occurred: {e}')
+            LOGGER.error(f'Delete operation error: {e}', exc_info=True)
+            return False
+
+    def delete_file(self, chat_id, msg_id, hash):
+        """Delete a specific file from database"""
+        try:
+            result = self.files.delete_one({
+                "chat_id": chat_id,
+                "msg_id": int(msg_id),
+                "hash": hash
+            })
+            if result.deleted_count > 0:
+                LOGGER.info(f"Deleted file: chat_id={chat_id}, msg_id={msg_id}")
+                return True
+            return False
+        except Exception as e:
+            LOGGER.error(f"Error deleting file: {e}")
             return False
 
     async def edit(self, id, name, thumbnail):

@@ -1,10 +1,11 @@
 import logging
+import aiohttp_jinja2
 from aiohttp import web
 from aiohttp_session import get_session
 from bot.helper.database import Database
 from bot.helper.chats import get_chats, post_playlist, posts_chat, posts_db_file
-from bot.server.render_template import render_page
 from bot.config import Telegram
+from bot.server.stream_server import media_streamer
 
 routes = web.RouteTableDef()
 
@@ -12,8 +13,7 @@ routes = web.RouteTableDef()
 async def login_get(request):
     session = await get_session(request)
     redirect_url = session.get('redirect_url', '/home')
-    return web.Response(text=await render_page(None, None, route='login', redirect_url=redirect_url),
-                        content_type='text/html')
+    return aiohttp_jinja2.render_template('login.html', request, {'redirect_url': redirect_url})
 
 @routes.post('/login')
 async def login_post(request):
@@ -28,8 +28,7 @@ async def login_post(request):
         redirect_url = session.pop('redirect_url', '/home')
         return web.HTTPFound(redirect_url)
     else:
-        return web.Response(text=await render_page(None, None, route='login', msg="Invalid credentials"),
-                            content_type='text/html')
+        return aiohttp_jinja2.render_template('login.html', request, {'msg': "Invalid credentials"})
 
 @routes.get('/home')
 async def home_page(request):
@@ -47,9 +46,11 @@ async def home_page(request):
         dhtml = await post_playlist(playlists)
         is_admin = (user == Telegram.ADMIN_USERNAME)
 
-        html = await render_page(None, None, route='home', html=phtml, playlist=dhtml,
-                                is_admin=is_admin)
-        return web.Response(text=html, content_type='text/html')
+        return aiohttp_jinja2.render_template('home.html', request, {
+            'channels': channels,
+            'playlists': playlists,
+            'is_admin': is_admin
+        })
     except Exception as e:
         logging.exception("Error in home page")
         return web.Response(text="Internal Server Error", status=500)
@@ -64,15 +65,25 @@ async def search_page(request):
             return web.HTTPFound('/login')
 
         db = request.app['db']
-        query = request.query.get('q', '')
-        page = int(request.query.get('page', 1))
+        query = request.query.get('q', '').strip()
 
-        results = await db.search_files(query, page)
-        html = await render_page(None, None, route='search', search_results=results, query=query)
-        return web.Response(text=html, content_type='text/html')
-    except Exception:
-        logging.exception("Error in search page")
-        return web.Response(text="Internal Server Error", status=500)
+        try:
+            page = max(1, int(request.query.get('page', 1)))
+        except (ValueError, TypeError):
+            page = 1
+
+        if not query or len(query) < 2:
+            results = []
+        else:
+            results = await db.search_files(query, page)
+
+        return aiohttp_jinja2.render_template('search.html', request, {
+            'query': query,
+            'search_results': results
+        })
+    except Exception as e:
+        logging.exception(f"Search page error for query '{query}': {e}")
+        return web.Response(text=f"Internal Server Error: Unable to process search", status=500)
 
 @routes.get('/playlist')
 async def playlist_page(request):
@@ -85,7 +96,11 @@ async def playlist_page(request):
 
         db = request.app['db']
         parent = request.query.get('db', 'root')
-        page = int(request.query.get('page', 1))
+
+        try:
+            page = max(1, int(request.query.get('page', 1)))
+        except (ValueError, TypeError):
+            page = 1
 
         playlists = await db.get_Dbfolder(parent, page=page)
         files = await db.get_dbFiles(parent, page=page)
@@ -95,13 +110,21 @@ async def playlist_page(request):
         dphtml = await posts_db_file(files)
         is_admin = (user == Telegram.ADMIN_USERNAME)
 
-        html = await render_page(parent, None, route='playlist', playlist=dhtml, database=dphtml,
-                                msg=text, is_admin=is_admin)
-
-        return web.Response(text=html, content_type='text/html')
+        return aiohttp_jinja2.render_template('playlist.html', request, {
+            'current_folder_name': text,
+            'folders': playlists,
+            'files': files,
+            'page': page,
+            'current_folder_id': parent,
+            'is_admin': is_admin
+        })
     except Exception:
         logging.exception("Error in playlist page")
         return web.Response(text="Internal Server Error", status=500)
+
+@routes.get("/stream/{encodedname}")
+async def stream_handler(request):
+    return await media_streamer(request)
 
 @routes.get('/rchatid/{encodedname}')
 async def video_page(request):
@@ -116,8 +139,12 @@ async def video_page(request):
         message_id = request.query.get('id')
         secure_hash = request.query.get('hash')
 
-        html = await render_page(message_id, secure_hash, route='video', encodedname=encodedname)
-        return web.Response(text=html, content_type='text/html')
+        return aiohttp_jinja2.render_template('video.html', request, {
+            'encodedname': encodedname,
+            'message_id': message_id,
+            'secure_hash': secure_hash,
+            'base_url': Telegram.BASE_URL
+        })
     except Exception:
         logging.exception("Error in video page")
         return web.Response(text="Internal Server Error", status=500)
@@ -132,8 +159,7 @@ async def channels_page(request):
             return web.HTTPFound('/login')
 
         channels = await get_chats()
-        html = await render_page(None, None, route='channels', channels=channels)
-        return web.Response(text=html, content_type='text/html')
+        return aiohttp_jinja2.render_template('channels.html', request, {'channels': channels})
     except Exception:
         logging.exception("Channels page error")
         return web.Response(text="Internal server error", status=500)
@@ -147,8 +173,7 @@ async def settings_page(request):
             session['redirect_url'] = request.path_qs
             return web.HTTPFound('/login')
 
-        html = await render_page(None, None, route='settings')
-        return web.Response(text=html, content_type='text/html')
+        return aiohttp_jinja2.render_template('settings.html', request, {})
     except Exception:
         logging.exception("Settings page error")
         return web.Response(text="Internal server error", status=500)

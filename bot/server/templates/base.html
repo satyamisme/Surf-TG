@@ -26,6 +26,35 @@
     .card, .video-player {
         max-width: 100%;
     }
+    .alert {
+        padding: 1rem;
+        margin-bottom: 1rem;
+        border-radius: 4px;
+        position: relative;
+    }
+    .alert-error {
+        background: #fee;
+        border-left: 4px solid #e74c3c;
+        color: #c0392b;
+    }
+    .alert-success {
+        background: #d4edda;
+        border-left: 4px solid #28a745;
+        color: #155724;
+    }
+    .alert-close {
+        position: absolute;
+        top: 0.5rem;
+        right: 0.5rem;
+        background: none;
+        border: none;
+        font-size: 1.5rem;
+        cursor: pointer;
+        opacity: 0.5;
+    }
+    .alert-close:hover {
+        opacity: 1;
+    }
 
     @media (min-width: 768px) {
         .card, .video-player {

@@ -2,6 +2,8 @@ import base64
 import os
 import asyncio
 import secrets
+import aiohttp_jinja2
+import jinja2
 from aiohttp import web
 from aiohttp_session import setup
 from aiohttp_session.cookie_storage import EncryptedCookieStorage
@@ -20,6 +22,7 @@ async def start_services():
         SECRET_KEY = secrets.token_bytes(32)
 
     app = web.Application()
+    aiohttp_jinja2.setup(app, loader=jinja2.FileSystemLoader('bot/server/templates'))
     setup(app, EncryptedCookieStorage(SECRET_KEY))
     app['db'] = Database()
     app.router.add_routes(routes)
