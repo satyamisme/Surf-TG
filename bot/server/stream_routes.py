@@ -7,7 +7,6 @@ from bot.server.render_template import render_page
 from bot.config import Telegram
 
 routes = web.RouteTableDef()
-db = Database()
 
 @routes.get('/login')
 async def login_get(request):
@@ -41,6 +40,7 @@ async def home_page(request):
             session['redirect_url'] = request.path_qs
             return web.HTTPFound('/login')
 
+        db = request.app['db']
         channels = await get_chats()
         phtml = await posts_chat(channels)
         playlists = await db.get_Dbfolder('root')
@@ -63,6 +63,7 @@ async def search_page(request):
             session['redirect_url'] = request.path_qs
             return web.HTTPFound('/login')
 
+        db = request.app['db']
         query = request.query.get('q', '')
         page = int(request.query.get('page', 1))
 
@@ -82,6 +83,7 @@ async def playlist_page(request):
             session['redirect_url'] = request.path_qs
             return web.HTTPFound('/login')
 
+        db = request.app['db']
         parent = request.query.get('db', 'root')
         page = int(request.query.get('page', 1))
 

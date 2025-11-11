@@ -1,23 +1,33 @@
 import base64
 import os
 import asyncio
+import secrets
 from aiohttp import web
 from aiohttp_session import setup
 from aiohttp_session.cookie_storage import EncryptedCookieStorage
 
 from bot.server.stream_routes import routes
+from bot.helper.database import Database
 from bot.config import Telegram
 from bot import LOGGER
 from bot.telegram import StreamBot, UserBot
 from bot.telegram.clients import initialize_clients
 
 async def start_services():
-    SECRET_KEY = base64.urlsafe_b64decode(os.environ.get('SESSION_SECRET', 'a'*32).encode())
+    session_secret = os.environ.get('SESSION_SECRET')
+    if session_secret:
+        SECRET_KEY = base64.urlsafe_b64decode(session_secret)
+    else:
+        # Generate a new secret key if one isn't set
+        SECRET_KEY = secrets.token_bytes(32)
 
     app = web.Application()
 
     # Setup session middleware with encrypted cookie storage
     setup(app, EncryptedCookieStorage(SECRET_KEY))
+
+    # Attach the database instance to the application
+    app['db'] = Database()
 
     # Register routes from stream_routes.py
     app.router.add_routes(routes)
