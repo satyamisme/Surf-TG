@@ -336,8 +336,8 @@ class Database:
             LOGGER.error(f"Error getting last indexed ID: {e}")
             return 1
 
-    async def search_files(self, query, page=1, per_page=1000):
-        """Optimized search using MongoDB text index"""
+    async def search_files(self, query, chat_id=None, page=1, per_page=1000):
+        """Optimized search using MongoDB text index, with optional channel filter"""
         if not query or query.strip() == '':
             return []
 
@@ -345,6 +345,9 @@ class Database:
         search_query = {
             '$text': {'$search': query}
         }
+
+        if chat_id:
+            search_query['chat_id'] = str(chat_id)
 
         # Projection to add a score for relevance
         projection = {'score': {'$meta': 'textScore'}}

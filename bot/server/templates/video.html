@@ -10,11 +10,59 @@
     </video>
   </div>
   <div class="col-md-4">
-    <!-- Additional details or related videos -->
     <h3>Details</h3>
     <p>Message ID: {{ message_id }}</p>
     <p>Hash: {{ secure_hash }}</p>
+    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#shareModal">
+      Share
+    </button>
   </div>
 </div>
 
+<!-- Share Modal -->
+<div class="modal fade" id="shareModal" tabindex="-1" aria-labelledby="shareModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="shareModalLabel">Share Video</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p>Share this video with your friends!</p>
+        <div class="input-group mb-3">
+          <input type="text" class="form-control" value="{{ base_url }}/stream/{{ encodedname }}?id={{ message_id }}&hash={{ secure_hash }}" readonly>
+          <button class="btn btn-outline-secondary" type="button" onclick="copyToClipboard(this)">Copy</button>
+        </div>
+        <h6>VLC</h6>
+        <div class="input-group mb-3">
+            <input type="text" class="form-control" value="vlc://{{ base_url }}/stream/{{ encodedname }}?id={{ message_id }}&hash={{ secure_hash }}" readonly>
+            <button class="btn btn-outline-secondary" type="button" onclick="copyToClipboard(this)">Copy</button>
+        </div>
+        <h6>MX Player</h6>
+        <div class="input-group mb-3">
+            <input type="text" class="form-control" value="intent:{{ base_url }}/stream/{{ encodedname }}?id={{ message_id }}&hash={{ secure_hash }}#Intent;package=com.mxtech.videoplayer.ad;end" readonly>
+            <button class="btn btn-outline-secondary" type="button" onclick="copyToClipboard(this)">Copy</button>
+        </div>
+        <h6>Download</h6>
+        <div class="input-group mb-3">
+            <input type="text" class="form-control" value="{{ base_url }}/download/{{ encodedname }}?id={{ message_id }}&hash={{ secure_hash }}" readonly>
+            <button class="btn btn-outline-secondary" type="button" onclick="copyToClipboard(this)">Copy</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+  function copyToClipboard(button) {
+    const input = button.previousElementSibling;
+    input.select();
+    document.execCommand('copy');
+    button.textContent = 'Copied!';
+    setTimeout(() => {
+      button.textContent = 'Copy';
+    }, 2000);
+  }
+</script>
 {% endblock %}

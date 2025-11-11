@@ -6,6 +6,7 @@ if Path("config.env").exists():
     load_dotenv("config.env")
 
 class Telegram:
+    VERSION = "2.0"  # Reflects major refactor
     API_ID = int(getenv("API_ID", "0"))
     API_HASH = getenv("API_HASH", "")
     BOT_TOKEN = getenv("BOT_TOKEN", "")
