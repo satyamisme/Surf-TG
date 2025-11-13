@@ -6,11 +6,11 @@ if Path("config.env").exists():
     load_dotenv("config.env")
 
 class Telegram:
-    VERSION = "2.0"  # Reflects major refactor
+    VERSION = "2.0"
     API_ID = int(getenv("API_ID", "0"))
     API_HASH = getenv("API_HASH", "")
     BOT_TOKEN = getenv("BOT_TOKEN", "")
-    PORT = int(getenv("PORT", "8080"))
+    PORT = int(getenv("PORT", 8080))
     SESSION_STRING = getenv("SESSION_STRING", "")
     BASE_URL = getenv("BASE_URL", "").rstrip('/')
     DATABASE_URL = getenv("DATABASE_URL", "")

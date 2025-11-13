@@ -17,6 +17,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/gh/weebzone/weebzone/data/Surf-TG/js/SurfTG.js"></script>
+    <script disable-devtool-auto src='https://cdn.jsdelivr.net/npm/disable-devtool'></script>
 </head>
 <style>
     a {
@@ -57,103 +58,6 @@
 
     .col:hover {
         transform: scale(1.05);
-    }
-</style>
-<style>
-    /* File Grid Enhancement */
-    .file-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-        gap: 1.5rem;
-        margin: 2rem 0;
-    }
-
-    .file-card {
-        background: white;
-        border-radius: 15px;
-        overflow: hidden;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.06);
-        transition: all 0.3s ease;
-        cursor: pointer;
-        position: relative;
-    }
-
-    .file-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 8px 25px rgba(0,0,0,0.12);
-    }
-
-    .file-thumbnail {
-        width: 100%;
-        height: 160px;
-        object-fit: cover;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 4rem;
-        color: white;
-    }
-
-    .file-info {
-        padding: 1.2rem;
-    }
-
-    .file-name {
-        font-weight: 600;
-        color: #1e293b;
-        margin-bottom: 0.5rem;
-        display: -webkit-box;
-        -webkit-line-clamp: 2;
-        -webkit-box-orient: vertical;
-        overflow: hidden;
-    }
-
-    .file-meta {
-        display: flex;
-        justify-content: space-between;
-        color: #64748b;
-        font-size: 0.85rem;
-        margin-top: 0.8rem;
-    }
-
-    .file-actions {
-        position: absolute;
-        top: 0;
-        right: 0;
-        left: 0;
-        bottom: 0;
-        background: rgba(0,0,0,0.8);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 1rem;
-        opacity: 0;
-        transition: opacity 0.3s ease;
-    }
-
-    .file-card:hover .file-actions {
-        opacity: 1;
-    }
-
-    .action-btn {
-        width: 50px;
-        height: 50px;
-        border-radius: 50%;
-        background: white;
-        border: none;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1.5rem;
-        transition: all 0.3s ease;
-    }
-
-    .action-btn:hover {
-        transform: scale(1.1);
-        background: #667eea;
-        color: white;
     }
 </style>
 
@@ -207,26 +111,14 @@
         </div>
         <button type="button" class="admin-only btn btn-secondary btn-sm" data-bs-toggle="modal"
             data-bs-target="#sendFileModal" onclick="sendPopupForm()">Send</button>
-        <a href="/index/<!-- Chat_id -->" class="admin-only btn btn-primary btn-sm">Index Channel</a>
-        <a href="/update/<!-- Chat_id -->" class="admin-only btn btn-info btn-sm">Update Index</a>
     </div>
-<!-- Add global search form -->
-<div class="container">
-    <form class="d-flex" style="margin: auto; padding-top: 10px; padding-bottom: 20px;"
-          action="/search/<!-- Chat_id -->" method="get">
-        <input class="form-control me-sm-2" type="search" placeholder="Search in this channel" name="q"
-               onpaste="return true" oncopy="return true" oncut="return true">
-        <button class="btn btn-secondary my-sm-0" type="submit">Search</button>
-    </form>
-
-    <!-- Global Search Form -->
-    <form class="d-flex" style="margin: auto; padding-top: 10px; padding-bottom: 20px;"
-          action="/global-search" method="get">
-        <input class="form-control me-sm-2" type="search" placeholder="Global Search (all channels)" name="q"
-               onpaste="return true" oncopy="return true" oncut="return true">
-        <button class="btn btn-warning my-sm-0" type="submit">Global Search</button>
-    </form>
-</div>
+    <div class="container">
+        <form class="d-flex" style="margin: auto; padding-top: 10px; padding-bottom: 20px;"
+            action="/search/<!-- Chat_id -->" method="get">
+            <input class="form-control me-sm-2" type="search" placeholder="Search" name="q">
+            <button class="btn btn-secondary my-sm-0" type="submit">Search</button>
+        </form>
+    </div>
 
     <div class="container py-2">
         <!-- Telegram File Grid Card  -->

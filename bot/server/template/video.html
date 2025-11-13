@@ -7,9 +7,12 @@
     <link rel="icon" href="https://cdn.jsdelivr.net/gh/weebzone/weebzone/data/Surf-TG/src/ico2.png" type="image/x-icon">
     <link rel="shortcut icon" href="https://cdn.jsdelivr.net/gh/weebzone/weebzone/data/Surf-TG/src/ico2.png"
         type="image/x-icon">
-    <title>Surf-TG: <!-- Filename --> </title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+    <title>Surf-TG: <!-- Filename --> </title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/weebzone/weebzone/data/Surf-TG/css/plyr.css">
+    <script src="https://cdn.plyr.io/3.7.8/plyr.polyfilled.js"></script>
     <link rel="stylesheet" href="https://bootswatch.com/5/<!-- Theme -->/bootstrap.min.css">
+    <script disable-devtool-auto src='https://cdn.jsdelivr.net/npm/disable-devtool'></script>
     <style>
         body {
             height: 100vh;
@@ -40,26 +43,35 @@
             max-width: 48%
         }
 
-        /* For WebKit browsers (Chrome, Safari, etc.) */
-        /* Track */
+        .video-player {
+            max-width: 48%;
+            margin: auto;
+            padding-bottom: 10px;
+        }
+
+        .plyr {
+            border-radius: 5px;
+        }
+
         ::-webkit-scrollbar {
             width: 5px;
-            /* Set the width of the scrollbar */
         }
 
-        /* Handle */
         ::-webkit-scrollbar-thumb {
             background: #888;
-            /* Color of the scrollbar handle */
         }
 
-        /* Handle on hover */
         ::-webkit-scrollbar-thumb:hover {
             background: #555;
-            /* Color of the scrollbar handle on hover */
         }
 
         @media (max-width: 992px) {
+
+            .video-player {
+                max-width: 80%;
+                margin: auto;
+            }
+
             .card {
                 align-items: left;
                 box-shadow: none;
@@ -76,35 +88,40 @@
 </head>
 
 <body>
-    <nav class="navbar navbar-expand-lg bg-primary" data-bs-theme="dark" style="margin-bottom: 1rem; padding: 10px;">
-        <div class="container">
-            <a class="navbar-brand" style="border: 0px;" href="/">
+    <nav class="navbar navbar-expand-lg bg-primary mb-3 p-1" data-bs-theme="dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/">
                 <img src="https://cdn.jsdelivr.net/gh/weebzone/weebzone/data/Surf-TG/src/logo%20(2).png" alt="Logo"
-                    height="45">
+                    height="40">
             </a>
-            <div>
-                <form id="signoutForm" action="/logout" method="post">
-                    <button type="submit" class="btn btn-primary"><i class="bi bi-box-arrow-left"></i> Logout</button>
+            <div class="d-flex">
+                <form id="signoutForm" action="/logout" method="post" class="d-flex" role="logout">
+                    <button type="submit" class="btn btn-secondary btn-sm"><i class="bi bi-box-arrow-left"></i>
+                        Logout</button>
                 </form>
             </div>
+
         </div>
     </nav>
-
+    <div class="video-player">
+        <video controls crossorigin playsinline data-poster="<!-- Poster -->" id="player">
+            <source src="#" type="video/mp4" />
+        </video>
+    </div>
     <div class="card bg-light mb-3" style="margin: auto; border-radius: 5px;">
         <div class="card-body">
-            <h5 class="card-title">Name: <!-- Filename --></h5>
+            <h6 class="card-title">Name: <!-- Filename --></h6>
             <p class="card-text">Size: <!-- Size --></p>
         </div>
     </div>
-
-<!-- Add copy buttons -->
-<div class="container d-flex justify-content-center align-items-center" style="width: 100%; padding: 0 5px;">
-    <div onclick="copyUrl()" class="btn btn-primary">Copy Download URL</div>
-    <div onclick="copyPageUrl()" class="btn btn-primary">Copy Page URL</div>
-    <div onclick="download()" class="btn btn-primary">Download</div>
-    <div onclick="get_file()" class="btn btn-primary">Get File</div>
-</div>
-
+    <div class="container d-flex justify-content-center align-items-center" style="width: 100%; padding: 0 5px;">
+        <div onclick="mx_player()" class="btn btn-primary">MX Player</div>
+        <div onclick="vlc_player()" class="btn btn-primary">VLC Mobile</div>
+        <div onclick="km_player()" class="btn btn-primary">KM Player</div>
+        <div onclick="get_file()" class="btn btn-primary">Get File</div>
+        <div onclick="copyUrl()" class="btn btn-primary">Copy Url</div>
+        <div onclick="download()" class="btn btn-primary">Download</div>
+    </div>
     <footer class="footer mt-auto py-3 text-muted text-center" style="color: white;">
         <div class="container d-flex justify-content-center align-items-center" style="width: 100%; padding: 0 10px;">
             <p class="float-end">
@@ -117,7 +134,7 @@
                 Reserved.
         </div>
     </footer>
-
+</body>
 <script>
     const videolink = window.location.href;
     const url = new URL(videolink);
@@ -130,7 +147,28 @@
 
     const downloadlink = `${domainUrl}/${videoId}/${encodedName}?id=${idParam}&hash=${hashParam}`;
 
-    
+    const player = new Plyr('#player', {
+        controls: ['play', 'progress', 'current-time', 'mute', 'volume', 'fullscreen', 'pip', 'airplay', 'settings', "play-large", 'duration'],
+        hideControls: false,
+        keyboard: { focused: true, global: true },
+        loop: { active: false },
+    });
+    function mx_player() {
+        const openDownloadLink = downloadlink;
+        const openMx = `intent:${openDownloadLink}#Intent;package=com.mxtech.videoplayer.ad;end`;
+        window.location.href = openMx;
+    }
+
+    function vlc_player() {
+        const openDownloadLink = downloadlink;
+        const openVlc = `vlc://${openDownloadLink}`;
+        window.location.href = openVlc;
+    }
+    function km_player() {
+        const openDownloadLink = downloadlink;
+        const openKmplayer = `intent:${openDownloadLink}#Intent;package=com.kmplayer;end`;
+        window.location.href = openKmplayer;
+    }
     function download() {
         const openDownloadLink = downloadlink;
         window.location.href = openDownloadLink;
@@ -145,56 +183,24 @@
             window.location.href = openTG;
         }
     }
-function copyPageUrl() {
-    const url = window.location.href;
-    navigator.clipboard.writeText(url)
-        .then(() => {
-            alert('Page URL copied to clipboard!');
-        })
-        .catch((error) => {
-            console.error('Failed to copy URL: ', error);
-            // Fallback
-            const textArea = document.createElement('textarea');
-            textArea.value = url;
-            document.body.appendChild(textArea);
-            textArea.select();
-            document.execCommand('copy');
-            document.body.removeChild(textArea);
-            alert('Page URL copied to clipboard!');
-        });
-}
-
-function copyUrl() {
-    const url = downloadlink;
-    navigator.clipboard.writeText(url)
-        .then(() => {
-            alert('Download URL copied to clipboard!');
-        })
-        .catch((error) => {
-            console.error('Failed to copy URL: ', error);
-            // Fallback
-            const textArea = document.createElement('textarea');
-            textArea.value = url;
-            document.body.appendChild(textArea);
-            textArea.select();
-            document.execCommand('copy');
-            document.body.removeChild(textArea);
-            alert('Download URL copied to clipboard!');
-        });
-}
-
-// Enable text selection
-document.addEventListener('DOMContentLoaded', function() {
-    const cardElements = document.querySelectorAll('.card-title, .card-text');
-    cardElements.forEach(element => {
-        element.style.userSelect = 'text';
-        element.style.webkitUserSelect = 'text';
-    });
-});
-    
+    function copyUrl() {
+        const url = downloadlink;
+        navigator.clipboard.writeText(url)
+            .then(() => {
+                alert('URL copied to clipboard!');
+            })
+            .catch((error) => {
+                console.error('Failed to copy URL: ', error);
+            });
+    }
+    function updateVideoSource() {
+        const videoElement = document.getElementById('player');
+        const newSrc = downloadlink;
+        videoElement.src = newSrc;
+    }
+    window.onload = function () {
+        updateVideoSource();
+    };
 </script>
-</body>
-
-<script disable-devtool-auto src='https://cdn.jsdelivr.net/npm/disable-devtool'></script>
 
 </html>
