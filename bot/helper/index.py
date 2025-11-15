@@ -7,6 +7,9 @@ from bot.helper.file_size import get_readable_file_size
 from bot.helper.cache import get_cache, save_cache
 from asyncio import gather
 
+db = Database()
+
+
 async def fetch_message(chat_id, message_id):
     try:
         message = await StreamBot.get_messages(chat_id, message_id)
@@ -35,7 +38,7 @@ async def get_messages(chat_id, first_message_id, last_message_id, batch_size=50
     return messages
 
 
-async def get_files(db, chat_id, page=1):
+async def get_files(chat_id, page=1):
     if Telegram.SESSION_STRING == '':
         return await db.list_tgfiles(id=chat_id, page=page)
     if cache := get_cache(chat_id, int(page)):

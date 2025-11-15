@@ -13,7 +13,7 @@ from pyrogram.errors import FloodWait
 from pyrogram.enums.parse_mode import ParseMode
 from asyncio import sleep
 
-db = Database(Telegram.DATABASE_URL)
+db = Database()
 
 
 @StreamBot.on_message(filters.command('start') & filters.private)

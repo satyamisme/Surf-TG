@@ -3,7 +3,9 @@ from bot.helper.database import Database
 from bot.telegram import StreamBot
 from bot.config import Telegram
 
-async def get_chats(db):
+db = Database()
+
+async def get_chats():
     AUTH_CHANNEL = await db.get_variable('auth_channel')
     if AUTH_CHANNEL is None or AUTH_CHANNEL.strip() == '':
         AUTH_CHANNEL = Telegram.AUTH_CHANNEL

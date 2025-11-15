@@ -6,9 +6,8 @@ class TokenParser:
         self.tokens = {}
         self.config_file = config_file
 
-    @staticmethod
-    def parse_from_env():
-        tokens = dict(
+    def parse_from_env(self):
+        self.tokens = dict(
             (c + 1, t)
             for c, (_, t) in enumerate(
                 filter(
@@ -17,4 +16,4 @@ class TokenParser:
                 )
             )
         )
-        return tokens
+        return self.tokens

@@ -5,7 +5,8 @@ from bot.telegram import UserBot
 from os.path import splitext
 from bot.helper.file_size import get_readable_file_size
 
-async def search(db, chat_id, query, page):
+db = Database()
+async def search(chat_id, query, page):
     if Telegram.SESSION_STRING == '':
         return await db.search_tgfiles(id=chat_id, query=query, page=page)
     posts = []

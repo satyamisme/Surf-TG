@@ -3,7 +3,6 @@ import logging
 import math
 import mimetypes
 import secrets
-import aiohttp_jinja2
 from aiohttp import web
 from aiohttp.http_exceptions import BadStatusLine
 from bot.helper.chats import get_chats, post_playlist, posts_chat, posts_db_file
@@ -16,6 +15,7 @@ from bot.config import Telegram
 from bot.helper.exceptions import FIleNotFound, InvalidHash
 from bot.helper.index import get_files, posts_file
 from bot.server.custom_dl import ByteStreamer
+from bot.server.render_template import render_page
 from bot.helper.cache import rm_cache
 
 from bot.telegram import StreamBot
@@ -23,13 +23,14 @@ from bot.telegram import StreamBot
 client_cache = {}
 
 routes = web.RouteTableDef()
+db = Database()
 
 
 @routes.get('/login')
 async def login_form(request):
     session = await get_session(request)
     redirect_url = session.get('redirect_url', '/')
-    return aiohttp_jinja2.render_template('login.html', request, {'redirect_url': redirect_url})
+    return web.Response(text=await render_page(None, None, route='login', redirect_url=redirect_url), content_type='text/html')
 
 
 @routes.post('/login')
@@ -50,7 +51,7 @@ async def login_route(request):
         return web.HTTPFound(redirect_url)
     else:
         error_message = "Invalid username or password"
-    return aiohttp_jinja2.render_template('login.html', request, {'msg': error_message})
+    return web.Response(text=await render_page(None, None, route='login', msg=error_message), content_type='text/html')
 
 
 @routes.post('/logout')
@@ -209,14 +210,13 @@ async def editConfig_route(request):
 async def home_route(request):
     session = await get_session(request)
     if username := session.get('user'):
-        db = request.app['db']
         try:
-            channels = await get_chats(db)
+            channels = await get_chats()
             playlists = await db.get_Dbfolder()
             phtml = await posts_chat(channels)
             dhtml = await post_playlist(playlists)
             is_admin = username == Telegram.ADMIN_USERNAME
-            return aiohttp_jinja2.render_template('home.html', request, {'phtml': phtml, 'dhtml': dhtml, 'is_admin': is_admin})
+            return web.Response(text=await render_page(None, None, route='home', html=phtml, playlist=dhtml, is_admin=is_admin), content_type='text/html')
         except Exception as e:
             logging.critical(e.with_traceback(None))
             raise web.HTTPInternalServerError(text=str(e)) from e
@@ -229,7 +229,6 @@ async def home_route(request):
 async def playlist_route(request):
     session = await get_session(request)
     if username := session.get('user'):
-        db = request.app['db']
         try:
             parent_id = request.query.get('db')
             page = request.query.get('page', '1')
@@ -239,7 +238,7 @@ async def playlist_route(request):
             dhtml = await post_playlist(playlists)
             dphtml = await posts_db_file(files)
             is_admin = username == Telegram.ADMIN_USERNAME
-            return aiohttp_jinja2.render_template('playlist.html', request, {'dhtml': dhtml, 'dphtml': dphtml, 'text': text, 'is_admin': is_admin, 'parent_id': parent_id})
+            return web.Response(text=await render_page(parent_id, None, route='playlist', playlist=dhtml, database=dphtml, msg=text, is_admin=is_admin), content_type='text/html')
         except Exception as e:
             logging.critical(e.with_traceback(None))
             raise web.HTTPInternalServerError(text=str(e)) from e
@@ -252,7 +251,6 @@ async def playlist_route(request):
 async def dbsearch_route(request):
     session = await get_session(request)
     if username := session.get('user'):
-        db = request.app['db']
         parent = request.match_info['parent']
         page = request.query.get('page', '1')
         query = request.query.get('q')
@@ -262,7 +260,7 @@ async def dbsearch_route(request):
             dphtml = await posts_db_file(files)
             name = await db.get_info(parent)
             text = f"{name} - {query}"
-            return aiohttp_jinja2.render_template('playlist.html', request, {'dphtml': dphtml, 'text': text, 'is_admin': is_admin, 'parent_id': parent})
+            return web.Response(text=await render_page(parent, None, route='playlist', database=dphtml, msg=text, is_admin=is_admin), content_type='text/html')
         except Exception as e:
             logging.critical(e.with_traceback(None))
             raise web.HTTPInternalServerError(text=str(e)) from e
@@ -279,12 +277,11 @@ async def channel_route(request):
         chat_id = f"-100{chat_id}"
         page = request.query.get('page', '1')
         is_admin = username == Telegram.ADMIN_USERNAME
-        db = request.app['db']
         try:
-            posts = await get_files(db, chat_id, page=page)
+            posts = await get_files(chat_id, page=page)
             phtml = await posts_file(posts, chat_id)
             chat = await StreamBot.get_chat(int(chat_id))
-            return aiohttp_jinja2.render_template('index.html', request, {'phtml': phtml, 'chat_title': chat.title, 'chat_id': chat_id.replace("-100", ""), 'is_admin': is_admin})
+            return web.Response(text=await render_page(None, None, route='index', html=phtml, msg=chat.title, chat_id=chat_id.replace("-100", ""), is_admin=is_admin), content_type='text/html')
         except Exception as e:
             logging.critical(e.with_traceback(None))
             raise web.HTTPInternalServerError(text=str(e)) from e
@@ -302,9 +299,8 @@ async def search_route(request):
         page = request.query.get('page', '1')
         query = request.query.get('q')
         is_admin = username == Telegram.ADMIN_USERNAME
-        db = request.app['db']
         try:
-            posts = await search(db, chat_id, page=page, query=query)
+            posts = await search(chat_id, page=page, query=query)
             phtml = await posts_file(posts, chat_id)
             chat = await StreamBot.get_chat(int(chat_id))
             text = f"{chat.title} - {query}"

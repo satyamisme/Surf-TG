@@ -4,30 +4,14 @@ from bot.config import Telegram
 import re
 
 
-from bot import LOGGER
-
 class Database:
-    def __init__(self, uri):
-        try:
-            self.client = MongoClient(uri)
-            self.db = self.client['surftg']
-            self.collection = self.db['playlist']
-            self.files = self.db['files']
-            # Create indexes only once on init
-            self.create_indexes()
-        except Exception as e:
-            LOGGER.error(f"MongoDB connection failed: {e}", exc_info=True)
-            raise e
-
-    def create_indexes(self):
-        try:
-            self.collection.create_index([('name', "text")], default_language='english')
-            self.collection.create_index([('parent_folder', 1), ('type', 1)])
-            self.files.create_index([('title', "text")], default_language='english')
-            self.files.create_index([('chat_id', 1), ('msg_id', DESCENDING)])
-            self.files.create_index([('chat_id', 1), ('hash', 1)], unique=True)
-        except Exception as e:
-            LOGGER.error(f"Index creation error: {e}", exc_info=True)
+    def __init__(self):
+        MONGODB_URI = Telegram.DATABASE_URL
+        self.mongo_client = MongoClient(MONGODB_URI)
+        self.db = self.mongo_client["surftg"]
+        self.collection = self.db["playlist"]
+        self.config = self.db["config"]
+        self.files = self.db["files"]
 
     async def create_folder(self, parent_id, folder_name, thumbnail):
         folder = {"parent_folder": parent_id, "name": folder_name,

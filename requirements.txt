@@ -1,6 +1,5 @@
 aiofiles
 aiohttp
-aiohttp_jinja2
 aiohttp_session
 cryptography
 pyrofork
